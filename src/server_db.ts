@@ -35,45 +35,76 @@ let leads: LeadRecord[] = [];
 let users: UserRecord[] = [];
 let seededUsers: string[] = [];
 
-// Helper functions to read files
+// Helper functions to read files with robust fault recovery per file
 function loadData() {
+  // 1. QR Codes
   try {
     if (fs.existsSync(QR_FILE)) {
-      qrcodes = JSON.parse(fs.readFileSync(QR_FILE, 'utf-8'));
+      const content = fs.readFileSync(QR_FILE, 'utf-8').trim();
+      qrcodes = content ? JSON.parse(content) : getSeedQRCodes();
     } else {
       qrcodes = getSeedQRCodes();
       saveQRCodes();
     }
+  } catch (error) {
+    console.error('Error loading qrcodes.json, reverting to seeds:', error);
+    qrcodes = getSeedQRCodes();
+  }
 
+  // 2. Scan Logs
+  try {
     if (fs.existsSync(SCAN_FILE)) {
-      scans = JSON.parse(fs.readFileSync(SCAN_FILE, 'utf-8'));
+      const content = fs.readFileSync(SCAN_FILE, 'utf-8').trim();
+      scans = content ? JSON.parse(content) : getSeedScans();
     } else {
       scans = getSeedScans();
       saveScans();
     }
+  } catch (error) {
+    console.error('Error loading scans.json, reverting to seeds:', error);
+    scans = getSeedScans();
+  }
 
+  // 3. Leads Data
+  try {
     if (fs.existsSync(LEAD_FILE)) {
-      leads = JSON.parse(fs.readFileSync(LEAD_FILE, 'utf-8'));
+      const content = fs.readFileSync(LEAD_FILE, 'utf-8').trim();
+      leads = content ? JSON.parse(content) : getSeedLeads();
     } else {
       leads = getSeedLeads();
       saveLeads();
     }
+  } catch (error) {
+    console.error('Error loading leads.json, reverting to seeds:', error);
+    leads = getSeedLeads();
+  }
 
+  // 4. Secure Users Profile Database
+  try {
     if (fs.existsSync(USER_FILE)) {
-      users = JSON.parse(fs.readFileSync(USER_FILE, 'utf-8'));
+      const content = fs.readFileSync(USER_FILE, 'utf-8').trim();
+      users = content ? JSON.parse(content) : [];
     } else {
       users = [];
       saveUsers();
     }
+  } catch (error) {
+    console.error('Error loading users.json database, resetting securely:', error);
+    users = [];
+  }
 
+  // 5. Seeded Users Registry
+  try {
     if (fs.existsSync(SEEDED_FILE)) {
-      seededUsers = JSON.parse(fs.readFileSync(SEEDED_FILE, 'utf-8'));
+      const content = fs.readFileSync(SEEDED_FILE, 'utf-8').trim();
+      seededUsers = content ? JSON.parse(content) : [];
     } else {
       seededUsers = [];
       saveSeededUsers();
     }
   } catch (error) {
-    console.error('Error loading data, using in-memory fallback', error);
+    console.error('Error loading seeded registry, resetting securely:', error);
+    seededUsers = [];
   }
 }
 

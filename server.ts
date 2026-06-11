@@ -164,7 +164,7 @@ app.get('/r', (req: Request, res: Response) => {
     if (qr.ownerId) {
       if (qr.ownerId.startsWith('user_')) {
         const owner = db.getUserById(qr.ownerId);
-        if (owner && (owner.isPaid || owner.email.toLowerCase() === 'support@odogwu.online')) {
+        if (owner && (owner.isPaid || owner.email.toLowerCase() === 'support@odogwu.online' || owner.email.toLowerCase() === 'azubuikedavies@gmail.com')) {
           isOwnerPaid = true;
         }
       } else {
@@ -417,7 +417,7 @@ app.get('/r', (req: Request, res: Response) => {
     }
 
     const userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-    const isProFounder = cleanEmail.toLowerCase() === 'support@odogwu.online'; // Provide immediate Pro and admin capability for creator email!
+    const isProFounder = cleanEmail.toLowerCase() === 'support@odogwu.online' || cleanEmail.toLowerCase() === 'azubuikedavies@gmail.com'; // Provide immediate Pro and admin capability for creator emails!
 
     const userRecord = {
       id: userId,
@@ -509,7 +509,7 @@ app.get('/r', (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized credentials.' });
     }
     const requestingUser = db.getUserById(userId);
-    if (!requestingUser || requestingUser.email.toLowerCase() !== 'support@odogwu.online') {
+    if (!requestingUser || (requestingUser.email.toLowerCase() !== 'support@odogwu.online' && requestingUser.email.toLowerCase() !== 'azubuikedavies@gmail.com')) {
       return res.status(403).json({ error: 'Access forbidden. Only system administrators can fetch users.' });
     }
 
@@ -553,11 +553,11 @@ app.get('/r', (req: Request, res: Response) => {
     // Securely enforce free plan limits: Free users are capped at 2 campaigns
     let isUserPaid = false;
     const userEmail = ((req.headers['x-user-email'] as string) || '').trim().toLowerCase();
-    if (userEmail === 'support@odogwu.online') {
+    if (userEmail === 'support@odogwu.online' || userEmail === 'azubuikedavies@gmail.com') {
       isUserPaid = true;
     } else if (ownerId && ownerId.startsWith('user_')) {
       const user = db.getUserById(ownerId);
-      if (user && (user.isPaid || user.email.toLowerCase() === 'support@odogwu.online')) {
+      if (user && (user.isPaid || user.email.toLowerCase() === 'support@odogwu.online' || user.email.toLowerCase() === 'azubuikedavies@gmail.com')) {
         isUserPaid = true;
       }
     }
@@ -613,11 +613,11 @@ app.get('/r', (req: Request, res: Response) => {
     // Securely check if user is paid
     let isUserPaid = false;
     const userEmail = ((req.headers['x-user-email'] as string) || '').trim().toLowerCase();
-    if (userEmail === 'support@odogwu.online') {
+    if (userEmail === 'support@odogwu.online' || userEmail === 'azubuikedavies@gmail.com') {
       isUserPaid = true;
     } else if (ownerId && ownerId.startsWith('user_')) {
       const user = db.getUserById(ownerId);
-      if (user && (user.isPaid || user.email.toLowerCase() === 'support@odogwu.online')) {
+      if (user && (user.isPaid || user.email.toLowerCase() === 'support@odogwu.online' || user.email.toLowerCase() === 'azubuikedavies@gmail.com')) {
         isUserPaid = true;
       }
     } else {

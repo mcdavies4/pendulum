@@ -61,9 +61,9 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       localStorage.removeItem('pendulum_is_admin');
       return false;
     }
-    // Also unlock for support@odogwu.online
+    // Also unlock for support@odogwu.online & azubuikedavies@gmail.com
     const activeEmail = localStorage.getItem('pendulum_user_email');
-    if (activeEmail && activeEmail.toLowerCase() === 'support@odogwu.online') {
+    if (activeEmail && (activeEmail.toLowerCase() === 'support@odogwu.online' || activeEmail.toLowerCase() === 'azubuikedavies@gmail.com')) {
       return true;
     }
     // For direct preview and users, default to false so the landing is beautifully clean
@@ -460,7 +460,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-300 mt-1 font-semibold max-w-lg leading-relaxed">
-                    Authorized Creator: <span className="text-white font-bold underline font-sans">support@odogwu.online</span> • This top bar is a developer workspace helper. Your end users will <span className="text-emerald-400 font-bold">never</span> see this banner on their accounts.
+                    Authorized Creator: <span className="text-white font-bold underline font-sans">support@odogwu.online / azubuikedavies@gmail.com</span> • This top bar is a developer workspace helper. Your end users will <span className="text-emerald-400 font-bold">never</span> see this banner on their accounts.
                   </p>
                 </div>
               </div>
