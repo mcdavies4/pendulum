@@ -159,6 +159,126 @@ app.get('/r', (req: Request, res: Response) => {
       referrer,
     };
 
+    // Enforce redirection limit on free tiers: Capped at 100 scans per campaign.
+    let isOwnerPaid = false;
+    if (qr.ownerId) {
+      if (qr.ownerId.startsWith('user_')) {
+        const owner = db.getUserById(qr.ownerId);
+        if (owner && (owner.isPaid || owner.email.toLowerCase() === 'support@odogwu.online')) {
+          isOwnerPaid = true;
+        }
+      } else {
+        // Exempt default_user/demo or anonymous seeds so that initial workspace dashboard looks amazing
+        isOwnerPaid = true;
+      }
+    } else {
+      isOwnerPaid = true;
+    }
+
+    if (!isOwnerPaid && (qr.scanCount || 0) >= 100) {
+      res.setHeader('Content-Type', 'text/html');
+      return res.status(403).send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Campaign Redirect Paused | Pendulum QR</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+              background-color: #09090b;
+              color: #fafafa;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              margin: 0;
+              padding: 20px;
+            }
+            .card {
+              background: #18181b;
+              border: 1px solid #27272a;
+              border-radius: 12px;
+              padding: 40px;
+              max-width: 480px;
+              width: 100%;
+              text-align: center;
+              box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+            }
+            .logo {
+              font-weight: 700;
+              font-size: 24px;
+              letter-spacing: -0.05em;
+              color: #ffffff;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 24px;
+              justify-content: center;
+            }
+            .logo span {
+              color: #10b981;
+            }
+            h1 {
+              font-size: 20px;
+              font-weight: 600;
+              margin-top: 0;
+              margin-bottom: 12px;
+              color: #f4f4f5;
+            }
+            p {
+              color: #a1a1aa;
+              font-size: 15px;
+              line-height: 1.6;
+              margin-bottom: 24px;
+            }
+            .badge {
+              display: inline-block;
+              background-color: #3f3f46;
+              color: #f4f4f5;
+              padding: 4px 12px;
+              border-radius: 9999px;
+              font-size: 12px;
+              font-weight: 500;
+              margin-bottom: 16px;
+            }
+            .btn {
+              display: inline-block;
+              background-color: #10b981;
+              color: #ffffff;
+              text-decoration: none;
+              font-weight: 500;
+              font-size: 14px;
+              padding: 12px 24px;
+              border-radius: 6px;
+              transition: background-color 0.2s;
+            }
+            .btn:hover {
+              background-color: #059669;
+            }
+            .footer {
+              margin-top: 32px;
+              font-size: 12px;
+              color: #52525b;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <div class="logo">Pendulum<span>QR</span></div>
+            <div class="badge">Scan Limit Reached</div>
+            <h1>Campaign Redirect Paused</h1>
+            <p>This dynamic QR campaign operates on a standard free trial account and has reached its standard redirection cap (max 100 scans).</p>
+            <p style="font-size: 14px; color: #71717a;">To resume instant redirects for your visitors, unlock custom branded URLs, and enjoy unlimited dynamic targets, please upgrade the campaign owner account to Premium.</p>
+            <a href="/" class="btn">Upgrade Member Portal</a>
+            <div class="footer">Powered by Pendulum QR &bull; Instant Mobile Redirection</div>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+
     db.addScan(scanLog);
 
     // If Lead Capture is enabled, and we don't have a lead yet (we can handle target-routing)
@@ -485,6 +605,25 @@ app.get('/r', (req: Request, res: Response) => {
 
     if (existing.ownerId !== ownerId) {
       return res.status(403).json({ error: 'Access forbidden. You do not own this QR code.' });
+    }
+
+    // Securely check if user is paid
+    let isUserPaid = false;
+    if (ownerId && ownerId.startsWith('user_')) {
+      const user = db.getUserById(ownerId);
+      if (user && (user.isPaid || user.email.toLowerCase() === 'support@odogwu.online')) {
+        isUserPaid = true;
+      }
+    } else {
+      // Keep demo user or local default sessions open
+      isUserPaid = true;
+    }
+
+    // Enforce No-Reusing-Free-Campaign-Target restriction!
+    if (!isUserPaid && longUrl !== undefined && longUrl !== existing.longUrl) {
+      return res.status(403).json({
+        error: 'Updating the target redirect URL of an existing QR code requires Premium (Dynamic Redirect Loops). Please upgrade to update printed QR destinations.'
+      });
     }
 
     const updated = db.updateQRCode(id, {

@@ -264,12 +264,15 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
         body: JSON.stringify({ longUrl: editLongUrl, name: editName }),
       });
 
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        const errObj = await response.json().catch(() => ({}));
+        throw new Error(errObj.error || 'Fail to update target coordinates routing.');
+      }
 
       setEditingQrId(null);
       fetchData();
-    } catch (e) {
-      alert('Fail to update target coordinates routing.');
+    } catch (e: any) {
+      alert(e.message || 'Fail to update target coordinates routing.');
     }
   };
 
