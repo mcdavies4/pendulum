@@ -190,15 +190,52 @@ export default function QRRenderer({ value, qrId, size = 180, fgColor: initialFg
   }
 
   return (
-    <div id={`qr-card-${qrId}`} className="flex flex-col items-center bg-zinc-900/50 border border-zinc-805/80 rounded-2xl p-5 hover:border-zinc-800 transition-all shadow-premium">
-      <div className="relative group p-4 bg-white rounded-xl border border-zinc-800 shadow-inner flex items-center justify-center">
-        <canvas ref={canvasRef} className="rounded-lg max-w-full" style={{ width: `${size}px`, height: `${size}px` }} />
-        <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-950/90 backdrop-blur-md text-white text-[10px] py-1 px-2 rounded-lg font-mono pointer-events-none border border-zinc-800">
-          <span>High-Res PNG</span>
+    <div id={`qr-card-${qrId}`} className="flex flex-col md:flex-row md:items-start md:gap-6 w-full items-center bg-zinc-900/50 border border-zinc-805/80 rounded-2xl p-4 sm:p-5 hover:border-zinc-800 transition-all shadow-premium">
+      {/* Visual Canvas Panel Column */}
+      <div className="flex flex-col items-center space-y-4 shrink-0 w-full md:w-auto">
+        <div className="relative group p-4 bg-white rounded-xl border border-zinc-800 shadow-inner flex items-center justify-center w-max mx-auto">
+          <canvas ref={canvasRef} className="rounded-lg max-w-full" style={{ width: `${size}px`, height: `${size}px` }} />
+          <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-950/90 backdrop-blur-md text-white text-[10px] py-1 px-2 rounded-lg font-mono pointer-events-none border border-zinc-800">
+            <span>High-Res PNG</span>
+          </div>
+        </div>
+
+        {/* Action Triggers Grid - Desktop Screen Spec */}
+        <div className="hidden md:grid grid-cols-2 gap-2.5 w-full">
+          <button
+            id={`btn-copy-desk-${qrId}`}
+            onClick={handleCopyLink}
+            type="button"
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-xl bg-zinc-950 text-zinc-300 border border-zinc-850 hover:bg-zinc-900 transition-all cursor-pointer whitespace-nowrap"
+          >
+            {copied ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span className="text-emerald-400 font-mono">Copied!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                <span>Copy URL</span>
+              </>
+            )}
+          </button>
+
+          <button
+            id={`btn-download-desk-${qrId}`}
+            onClick={handleDownload}
+            type="button"
+            disabled={downloading}
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold rounded-xl bg-indigo-650 hover:bg-indigo-500 text-white transition-all cursor-pointer disabled:opacity-50 border-none shadow-premium shadow-indigo-505/10 whitespace-nowrap"
+          >
+            <Download className="w-3.5 h-3.5 shrink-0" />
+            <span>{downloading ? 'Saving...' : 'Download'}</span>
+          </button>
         </div>
       </div>
 
-      <div className="w-full mt-5 space-y-4">
+      {/* Configuration Customizations Panel Column */}
+      <div className="w-full mt-5 md:mt-0 space-y-4 flex-1">
         {/* Style Preset Customization - Paid Hook! */}
         <div className="bg-zinc-950 border border-zinc-850 rounded-xl p-3">
           <div className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 mb-2.5">
@@ -245,7 +282,7 @@ export default function QRRenderer({ value, qrId, size = 180, fgColor: initialFg
               <button
                 type="button"
                 onClick={() => setMargin(Math.min(8, margin + 1))}
-                className="w-5 h-5 flex items-center justify-center bg-zinc-900 hover:bg-zinc-850 rounded-lg border border-zinc-800 cursor-pointer text-xs font-bold"
+                className="w-5 h-5 flex items-center justify-center bg-zinc-900 hover:bg-zinc-850 rounded-lg border border-zinc-805 cursor-pointer text-xs font-bold"
               >
                 +
               </button>
@@ -284,8 +321,8 @@ export default function QRRenderer({ value, qrId, size = 180, fgColor: initialFg
           </div>
         </div>
 
-        {/* Action triggers */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* Action triggers - Mobile Target Display (hidden on desktops) */}
+        <div className="grid md:hidden grid-cols-2 gap-3">
           <button
             id={`btn-copy-${qrId}`}
             onClick={handleCopyLink}

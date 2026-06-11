@@ -1713,7 +1713,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative w-full max-w-md overflow-hidden bg-[#13131c] border border-zinc-800 rounded-3xl shadow-2xl p-6 space-y-6 cursor-default"
+              className="relative w-full max-w-md md:max-w-3xl max-h-[90vh] overflow-y-auto bg-[#13131c] border border-zinc-800 rounded-3xl shadow-2xl p-6 space-y-6 cursor-default scrollbar-thin"
             >
               {/* Close Button */}
               <button
