@@ -23,6 +23,14 @@ export const apiFetch = (input: RequestInfo | URL, init?: RequestInit): Promise<
   if (!headers.has('X-Visitor-ID')) {
     headers.set('X-Visitor-ID', visitorId);
   }
+  
+  if (typeof window !== 'undefined') {
+    const email = localStorage.getItem('pendulum_user_email');
+    if (email) {
+      headers.set('X-User-Email', email);
+    }
+  }
+
   cleanInit.headers = headers;
   return fetch(input, cleanInit);
 };

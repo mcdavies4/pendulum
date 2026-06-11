@@ -17,6 +17,7 @@ const QR_FILE = path.join(DATA_DIR, 'qrcodes.json');
 const SCAN_FILE = path.join(DATA_DIR, 'scans.json');
 const LEAD_FILE = path.join(DATA_DIR, 'leads.json');
 const USER_FILE = path.join(DATA_DIR, 'users.json');
+const SEEDED_FILE = path.join(DATA_DIR, 'seeded.json');
 
 // Ensure data directory exists
 try {
@@ -32,6 +33,7 @@ let qrcodes: QRCodeRecord[] = [];
 let scans: ScanLog[] = [];
 let leads: LeadRecord[] = [];
 let users: UserRecord[] = [];
+let seededUsers: string[] = [];
 
 // Helper functions to read files
 function loadData() {
@@ -63,6 +65,13 @@ function loadData() {
       users = [];
       saveUsers();
     }
+
+    if (fs.existsSync(SEEDED_FILE)) {
+      seededUsers = JSON.parse(fs.readFileSync(SEEDED_FILE, 'utf-8'));
+    } else {
+      seededUsers = [];
+      saveSeededUsers();
+    }
   } catch (error) {
     console.error('Error loading data, using in-memory fallback', error);
   }
@@ -73,6 +82,14 @@ function saveUsers() {
     fs.writeFileSync(USER_FILE, JSON.stringify(users, null, 2), 'utf-8');
   } catch (err) {
     console.error('Failed to save Users to disk', err);
+  }
+}
+
+function saveSeededUsers() {
+  try {
+    fs.writeFileSync(SEEDED_FILE, JSON.stringify(seededUsers, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to save seeded registry to disk', err);
   }
 }
 
@@ -238,8 +255,11 @@ loadData();
 export const db = {
   getQRCodes: (ownerId: string) => {
     const userCodes = qrcodes.filter(qr => qr.ownerId === ownerId);
-    if (userCodes.length === 0 && ownerId !== 'default_user') {
+    if (userCodes.length === 0 && ownerId !== 'default_user' && !seededUsers.includes(ownerId)) {
       // Seed codes for this new visitor so their dashboard is already beautifully populated!
+      seededUsers.push(ownerId);
+      saveSeededUsers();
+
       const suffix = ownerId.replace('visitor_', '').slice(0, 6);
       const seeds = getSeedQRCodes().map(qr => ({
         ...qr,
