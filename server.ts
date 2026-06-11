@@ -2,7 +2,6 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
-import { createServer as createViteServer } from 'vite';
 import { db } from './src/server_db';
 import { QRCodeRecord, ScanLog, LeadRecord } from './src/types';
 import Stripe from 'stripe';
@@ -657,6 +656,7 @@ Return JSON only conforming to the schema of these 4 specific keys: "optimizedHe
     if (process.env.VERCEL) return;
 
     if (process.env.NODE_ENV !== 'production') {
+      const { createServer: createViteServer } = await import('vite');
       const vite = await createViteServer({
         server: { middlewareMode: true },
         appType: 'spa',

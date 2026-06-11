@@ -1,3 +1,4 @@
-import { app } from '../server';
+// @ts-ignore
+import pkg from '../dist/server.cjs';
 
-export default app;
+export default pkg.app;
