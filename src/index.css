@@ -1,0 +1,239 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;550;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Midnight Obsidian Premium Theme Presets */
+.bg-obsidian-950 {
+  background-color: #0d0d12;
+}
+.bg-obsidian-900 {
+  background-color: #13131c;
+}
+.bg-obsidian-850 {
+  background-color: #1c1c28;
+}
+
+.border-obsidian-800 {
+  border-color: #2b2b3d;
+}
+
+.shadow-premium {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 2px 8px -1px rgba(0, 0, 0, 0.2);
+}
+.shadow-premium-glow {
+  box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.25), 0 0 10px -2px rgba(99, 102, 241, 0.15);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #0c0a0f; /* dark velvet-void background */
+  color: #f4f4f5;
+}
+
+/* Beautiful custom subtle pulsing animation */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s infinite ease-in-out;
+}
+
+/* Custom glow borders on cards */
+.card-glass {
+  background: rgba(19, 19, 28, 0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(43, 43, 61, 0.6);
+  border-radius: 1.5rem;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-glass:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(19, 19, 28, 0.8);
+}
+
+/* =========================================
+   PREMIUM LIGHT MODE OVERRIDES 
+   ========================================= */
+
+.light {
+  background-color: #f7f9fc !important;
+  color: #0f172a !important;
+}
+
+.light body {
+  background-color: #f7f9fc !important;
+  color: #0f172a !important;
+}
+
+/* In Light mode, override specific dark utility classes */
+.light .bg-\\[\\#0c0a0f\\] { background-color: #f7f9fc !important; }
+.light .bg-\\[\\#0e0c15\\] { background-color: #f1f5f9 !important; border-top: 1px solid #e2e8f0 !important; }
+.light .bg-\\[\\#13131c\\] { background-color: #ffffff !important; }
+.light .bg-\\[\\#13131c\\]\\/80 { background-color: rgba(255, 255, 255, 0.85) !important; }
+.light .bg-\\[\\#1c1c28\\] { background-color: #ffffff !important; }
+.light .bg-\\[\\#1d1d2b\\] { background-color: #f1f5f9 !important; }
+.light .bg-\\[\\#1d1d2b\\]\\/60 { background-color: rgba(241, 245, 249, 0.6) !important; }
+.light .bg-\\[\\#2a2a3e\\]\\/40 { background-color: #e2e8f0 !important; }
+.light .bg-\\[\\#13111c\\]\\/60 { background-color: rgba(248, 250, 252, 0.6) !important; }
+
+/* Detailed Custom Background Overrides */
+.light .bg-zinc-900 { background-color: #ffffff !important; }
+.light .bg-zinc-900\\/40 { background-color: rgba(255, 255, 255, 0.75) !important; }
+.light .bg-zinc-900\\/50 { background-color: rgba(255, 255, 255, 0.75) !important; }
+.light .bg-zinc-950 { background-color: #f8fafc !important; }
+.light .bg-zinc-950\\/60 { background-color: rgba(248, 250, 252, 0.6) !important; }
+.light .bg-zinc-950\\/65 { background-color: rgba(248, 250, 252, 0.65) !important; }
+.light .bg-zinc-950\\/90 { background-color: rgba(248, 250, 252, 0.9) !important; }
+.light .bg-black { background-color: #f1f5f9 !important; }
+
+/* Custom dynamic Hex colors overrides for backgrounds */
+.light .bg-\\[\\#1e1e2d\\] { background-color: #f1f5f9 !important; }
+.light .bg-\\[\\#0e0e15\\] { background-color: #ffffff !important; }
+.light .bg-\\[\\#161624\\] { background-color: #ffffff !important; }
+.light .bg-\\[\\#171624\\]\\/40 { background-color: rgba(241, 245, 249, 0.4) !important; }
+.light .bg-\\[\\#171624\\]\\/60 { background-color: rgba(241, 245, 249, 0.6) !important; }
+.light .bg-\\[\\#252538\\] { background-color: #e2e8f0 !important; }
+.light .bg-\\[\\#1a192a\\]\\/30 { background-color: rgba(226, 232, 240, 0.3) !important; }
+.light .bg-\\[\\#12111a\\] { background-color: #ffffff !important; }
+.light .bg-\\[\\#1a1924\\] { background-color: #ffffff !important; }
+.light .bg-\\[\\#251e13\\]\\/30 { background-color: rgba(254, 243, 199, 0.5) !important; }
+
+/* Elegant card glass layouts inside light themes */
+.light .card-glass {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 2px 8px -1px rgba(0, 0, 0, 0.02) !important;
+}
+.light .card-glass:hover {
+  background: rgba(255, 255, 255, 1) !important;
+  border-color: rgba(99, 102, 241, 0.5) !important;
+}
+
+/* Borders mapping */
+.light .border-zinc-800 { border-color: #cbd5e1 !important; }
+.light .border-zinc-850 { border-color: #e2e8f0 !important; }
+.light .border-zinc-805\\/80 { border-color: #cbd5e1 !important; }
+.light .border-zinc-805 { border-color: #cbd5e1 !important; }
+.light .border-\\[\\#2b2b3d\\] { border-color: #cbd5e1 !important; }
+.light .border-\\[\\#2b2b40\\] { border-color: #cbd5e1 !important; }
+.light .border-zinc-700 { border-color: #cbd5e1 !important; }
+
+/* Hex borders mappings */
+.light .border-\\[\\#222133\\] { border-color: #e2e8f0 !important; }
+.light .border-\\[\\#2b2b40\\]\\/80 { border-color: rgba(226, 232, 240, 0.8) !important; }
+.light .border-\\[\\#222133\\]\\/80 { border-color: rgba(226, 232, 240, 0.8) !important; }
+.light .border-\\[\\#222133\\]\\/60 { border-color: rgba(226, 232, 240, 0.6) !important; }
+
+/* Headings color */
+.light h1, .light h2, .light h3, .light h4, .light h5, .light h6 {
+  color: #0f172a !important;
+}
+
+/* Text colors mapping */
+.light .text-\\[\\#f4f4f5\\] { color: #0f172a !important; }
+.light .text-\\[\\#a1a1aa\\] { color: #475569 !important; }
+.light .text-\\[\\#9393c8\\] { color: #475569 !important; }
+.light .text-zinc-50 { color: #0f172a !important; }
+.light .text-zinc-100 { color: #0f172a !important; }
+.light .text-zinc-200 { color: #1e293b !important; }
+.light .text-zinc-300 { color: #1e293b !important; }
+.light .text-zinc-350 { color: #334155 !important; }
+.light .text-zinc-400 { color: #475569 !important; }
+.light .text-zinc-450 { color: #475569 !important; }
+.light .text-zinc-455 { color: #475569 !important; }
+.light .text-zinc-500 { color: #64748b !important; }
+.light .text-zinc-600 { color: #64748b !important; }
+.light .text-white { color: #0f172a !important; }
+
+/* Accessible high-contrast color fixes for light backgrounds */
+.light .text-indigo-300 { color: #3730aa !important; }
+.light .text-indigo-400 { color: #4f46e5 !important; }
+.light .text-indigo-500 { color: #4338ca !important; }
+.light .text-indigo-600 { color: #4f46e5 !important; }
+
+.light .text-amber-300 { color: #92400e !important; }
+.light .text-amber-400 { color: #b45309 !important; }
+.light .text-amber-500 { color: #b45309 !important; }
+
+.light .text-rose-350 { color: #be123c !important; }
+.light .text-rose-400 { color: #be123c !important; }
+.light .text-rose-455 { color: #b91c1c !important; }
+
+.light .text-red-350 { color: #b91c1c !important; }
+.light .text-red-300 { color: #b91c1c !important; }
+.light .text-red-400 { color: #b91c1c !important; }
+
+.light .text-blue-300 { color: #1d4ed8 !important; }
+.light .text-blue-400 { color: #1d4ed8 !important; }
+
+.light .border-zinc-900 { border-color: #cbd5e1 !important; }
+.light .border-zinc-900\\/50 { border-color: rgba(203, 213, 225, 0.5) !important; }
+.light .border-zinc-900\\/80 { border-color: rgba(203, 213, 225, 0.8) !important; }
+
+/* Keep button labels bright white even when inside light mode */
+.light button .text-white,
+.light button.text-white,
+.light button .text-zinc-100,
+.light button.text-zinc-100,
+.light a.bg-indigo-650,
+.light button.bg-indigo-650,
+.light a.bg-indigo-600,
+.light button.bg-indigo-600,
+.light button.bg-amber-400,
+.light .bg-indigo-600 *,
+.light .bg-indigo-650 *,
+.light .bg-indigo-700 *,
+.light .bg-indigo-500 *,
+.light .bg-rose-600 *,
+.light .text-white-pure {
+  color: #ffffff !important;
+}
+.light button.bg-amber-400,
+.light button.bg-amber-400 * {
+  color: #000000 !important;
+}
+
+/* Header text correction */
+.light header span.bg-gradient-to-r {
+  background-image: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  color: #0f172a !important;
+}
+
+/* Table elements */
+.light tr.border-b { border-color: #cbd5e1 !important; }
+.light th { color: #475569 !important; border-color: #cbd5e1 !important; }
+
+/* Form inputs & select items */
+.light input[type="text"], 
+.light input[type="url"],
+.light input[type="email"],
+.light input[type="tel"],
+.light select,
+.light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+.light input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Footer text */
+.light footer p { color: #64748b !important; }
+
+/* AI Strategist Panel contrast corrections */
+.light .bg-indigo-950\\/15 {
+  background-color: rgba(99, 102, 241, 0.05) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+

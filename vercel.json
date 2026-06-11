@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/r/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/((?!assets/|api/|r/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
