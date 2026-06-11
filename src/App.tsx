@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import LeadCapture from './components/LeadCapture';
 import AuthModal from './components/AuthModal';
+import LandingPage from './components/LandingPage';
 import { Sparkles, Compass, ShieldCheck, Mail, LogOut, User, Sun, Moon, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 import { apiFetch } from './lib/api';
@@ -22,6 +23,16 @@ export default function App() {
     return localStorage.getItem('pendulum_user_id');
   });
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  // Decides whether to show the promotional marketing landing page first
+  const [showLanding, setShowLanding] = useState<boolean>(() => {
+    if (window.location.pathname.startsWith('/lead/')) return false;
+    const dismissed = localStorage.getItem('pendulum_show_landing');
+    if (dismissed === 'false') return false;
+    // Default to true if user is not logged in, giving them an elegant presentation first!
+    const activeEmail = localStorage.getItem('pendulum_user_email');
+    return !activeEmail;
+  });
 
   // Theme states: 'light' | 'dark' | 'auto'
   const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'auto'>(() => {
@@ -70,6 +81,7 @@ export default function App() {
     localStorage.setItem('pendulum_user_id', uid);
     localStorage.setItem('pendulum_user_email', email);
     localStorage.setItem('pendulum_is_paid', paidState ? 'true' : 'false');
+    localStorage.setItem('pendulum_show_landing', 'false'); // auto-bypass landing on auth success!
     // Force a clean reload to query actual data records matching the newly authenticated ID!
     window.location.reload();
   };
@@ -79,10 +91,16 @@ export default function App() {
     localStorage.removeItem('pendulum_user_email');
     localStorage.removeItem('pendulum_is_paid');
     localStorage.removeItem('pendulum_stripe_sub_id');
+    localStorage.removeItem('pendulum_show_landing'); // reset so they see intro on next click!
     setUserId(null);
     setUserEmail(null);
     setIsPaid(false);
     window.location.reload();
+  };
+
+  const handleEnterSandbox = () => {
+    setShowLanding(false);
+    localStorage.setItem('pendulum_show_landing', 'false');
   };
 
   // Handle premium upgrade toggles
@@ -183,7 +201,13 @@ export default function App() {
       {/* Top sticky premium glass navigation header */}
       {view === 'dashboard' && (
         <header className="bg-[#13131c]/80 backdrop-blur-md border-b border-[#2b2b3d] py-4.5 px-8 flex items-center justify-between sticky top-0 z-50 shadow-premium">
-          <div className="flex items-center gap-2.5">
+          <div 
+            className="flex items-center gap-2.5 cursor-pointer select-none opacity-95 hover:opacity-100 transition-opacity"
+            onClick={() => {
+              setShowLanding(true);
+              localStorage.setItem('pendulum_show_landing', 'true');
+            }}
+          >
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 via-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <div className="w-1.5 h-4 bg-white rounded-full opacity-90"></div>
             </div>
@@ -193,19 +217,40 @@ export default function App() {
           </div>
  
           <div className="hidden md:flex gap-8 text-xs font-black uppercase tracking-widest text-[#a1a1aa]">
-            <span className="cursor-pointer text-white hover:text-indigo-400 transition-colors">Dashboard</span>
-            <span className="cursor-pointer hover:text-white transition-colors" onClick={() => {
-              const el = document.getElementById('active-redirect-loops-section');
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}>My Codes</span>
-            <span className="cursor-pointer hover:text-white transition-colors" onClick={() => {
-              const el = document.getElementById('analytic-feed-section');
-              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}>Analytics</span>
-            <span className="cursor-pointer hover:text-white transition-colors" onClick={() => {
-              const el = document.getElementById('btn-billing-mgmt');
-              if (el) el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }}>Billing</span>
+            <span 
+              className={`cursor-pointer transition-colors ${!showLanding ? 'text-white font-black border-b-2 border-indigo-500 pb-1' : 'hover:text-white'}`}
+              onClick={() => {
+                setShowLanding(false);
+                localStorage.setItem('pendulum_show_landing', 'false');
+              }}
+            >
+              Console App
+            </span>
+            <span 
+              className={`cursor-pointer transition-colors ${showLanding ? 'text-white font-black border-b-2 border-indigo-500 pb-1' : 'hover:text-white'}`}
+              onClick={() => {
+                setShowLanding(true);
+                localStorage.setItem('pendulum_show_landing', 'true');
+              }}
+            >
+              Product Overview
+            </span>
+            {!showLanding && (
+              <>
+                <span className="cursor-pointer hover:text-white transition-colors" onClick={() => {
+                  const el = document.getElementById('active-redirect-loops-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}>My Codes</span>
+                <span className="cursor-pointer hover:text-white transition-colors" onClick={() => {
+                  const el = document.getElementById('analytic-feed-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}>Analytics</span>
+                <span className="cursor-pointer hover:text-white transition-colors" onClick={() => {
+                  const el = document.getElementById('btn-billing-mgmt');
+                  if (el) el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }}>Billing</span>
+              </>
+            )}
           </div>
  
           <div className="flex items-center gap-4">
@@ -296,6 +341,12 @@ export default function App() {
       <main>
         {view === 'lead' ? (
           <LeadCapture qrId={activeQrId} />
+        ) : showLanding ? (
+          <LandingPage 
+            onEnterSandbox={handleEnterSandbox}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            userEmail={userEmail}
+          />
         ) : (
           <Dashboard 
             isPaid={isPaid} 
