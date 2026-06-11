@@ -284,11 +284,19 @@ app.get('/r', (req: Request, res: Response) => {
     // If Lead Capture is enabled, and we don't have a lead yet (we can handle target-routing)
     if (qr.leadCaptureEnabled) {
       // Redirect to the custom local lead capture page, passing the final destination
-      return res.redirect(`/lead/${qr.id}?dest=${encodeURIComponent(qr.longUrl)}`);
+      let destUrl = qr.longUrl.trim();
+      if (!/^https?:\/\//i.test(destUrl)) {
+        destUrl = `https://${destUrl}`;
+      }
+      return res.redirect(`/lead/${qr.id}?dest=${encodeURIComponent(destUrl)}`);
     }
 
     // Standard fast 302 redirect
-    res.redirect(qr.longUrl);
+    let targetUrl = qr.longUrl.trim();
+    if (!/^https?:\/\//i.test(targetUrl)) {
+      targetUrl = `https://${targetUrl}`;
+    }
+    res.redirect(targetUrl);
   });
 
   // 2. Lead capture post webhook

@@ -202,17 +202,23 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       return;
     }
 
+    // Auto-prepend https:// if there is no protocol scheme present
+    let formattedUrl = newQrUrl.trim();
+    if (formattedUrl && !/^https?:\/\//i.test(formattedUrl)) {
+      formattedUrl = `https://${formattedUrl}`;
+    }
+
     // Basic URL validation
     try {
-      new URL(newQrUrl);
+      new URL(formattedUrl);
     } catch (err) {
-      setFormError('Please provide a valid long redirect destination URL including http:// or https://');
+      setFormError('Please provide a valid long redirect destination URL.');
       return;
     }
 
     const payload = {
       name: newQrName,
-      longUrl: newQrUrl,
+      longUrl: formattedUrl,
       id: newQrSlug.trim().toLowerCase() || undefined,
       qrType: 'dynamic',
       vertical: activeVertical,
@@ -257,11 +263,23 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
   };
 
   const handleSaveEdit = async (id: string) => {
+    let formattedEditUrl = editLongUrl.trim();
+    if (formattedEditUrl && !/^https?:\/\//i.test(formattedEditUrl)) {
+      formattedEditUrl = `https://${formattedEditUrl}`;
+    }
+
+    try {
+      new URL(formattedEditUrl);
+    } catch (e) {
+      alert('Please provide a valid target redirect url.');
+      return;
+    }
+
     try {
       const response = await apiFetch(`/api/qrcodes/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ longUrl: editLongUrl, name: editName }),
+        body: JSON.stringify({ longUrl: formattedEditUrl, name: editName }),
       });
 
       if (!response.ok) {

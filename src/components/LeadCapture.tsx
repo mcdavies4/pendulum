@@ -80,12 +80,16 @@ export default function LeadCapture({ qrId }: LeadCaptureProps) {
       // Instantly open coordinates redirect
       setTimeout(() => {
         if (qrCode) {
-          window.location.href = qrCode.longUrl;
+          let target = qrCode.longUrl.trim();
+          if (!/^https?:\/\//i.test(target)) {
+            target = `https://${target}`;
+          }
+          window.location.href = target;
         }
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('An error occurred during verification. Please try again.');
+      alert(`An error occurred: ${err.message || 'Please try again.'}`);
     } finally {
       setLoading(false);
     }
