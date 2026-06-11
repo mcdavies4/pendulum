@@ -11,15 +11,20 @@ export interface UserRecord {
   createdAt: string;
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
+const isVercel = !!process.env.VERCEL;
+const DATA_DIR = isVercel ? path.join('/tmp', 'data') : path.join(process.cwd(), 'data');
 const QR_FILE = path.join(DATA_DIR, 'qrcodes.json');
 const SCAN_FILE = path.join(DATA_DIR, 'scans.json');
 const LEAD_FILE = path.join(DATA_DIR, 'leads.json');
 const USER_FILE = path.join(DATA_DIR, 'users.json');
 
 // Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (error) {
+  console.error('Failed to ensure DATA_DIR exists:', error);
 }
 
 // In-Memory state fallback
