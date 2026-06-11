@@ -430,6 +430,24 @@ app.get('/r', (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Name and Target URL are required' });
     }
 
+    // Securely enforce free plan limits: Free users are capped at 2 campaigns
+    let isUserPaid = false;
+    if (ownerId && ownerId.startsWith('user_')) {
+      const user = db.getUserById(ownerId);
+      if (user && (user.isPaid || user.email.toLowerCase() === 'support@odogwu.online')) {
+        isUserPaid = true;
+      }
+    }
+
+    if (!isUserPaid) {
+      const existingQRs = db.getQRCodes(ownerId);
+      if (existingQRs.length >= 2) {
+        return res.status(403).json({ 
+          error: 'Campaign limit reached. Unlock Premium to bypass standard free tier restrictions (Max 2 codes).' 
+        });
+      }
+    }
+
     let id = req.body.id || Math.random().toString(36).substring(2, 7);
     id = id.trim().toLowerCase().replace(/[^a-z0-9-_]/g, '');
 
