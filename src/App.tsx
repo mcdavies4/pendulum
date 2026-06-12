@@ -3,7 +3,7 @@ import Dashboard from './components/Dashboard';
 import LeadCapture from './components/LeadCapture';
 import AuthModal from './components/AuthModal';
 import LandingPage from './components/LandingPage';
-import { Sparkles, Compass, ShieldCheck, Mail, LogOut, User, Sun, Moon, Clock } from 'lucide-react';
+import { Sparkles, Compass, ShieldCheck, Mail, LogOut, User, Sun, Moon, Clock, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { apiFetch } from './lib/api';
 
@@ -41,6 +41,7 @@ export default function App() {
   });
 
   const [activeTheme, setActiveTheme] = useState<'light' | 'dark'>('dark');
+  const [redirectError, setRedirectError] = useState<{ error: string; code: string } | null>(null);
 
   // Monitor theme settings updates
   useEffect(() => {
@@ -161,8 +162,17 @@ export default function App() {
         console.error('Failed to sync authentication state with server nodes:', err);
       });
 
-    // Check for Stripe Checkout success callbacks
+    // Check for search parameter errors and Stripe Checkout success callbacks
     const params = new URLSearchParams(window.location.search);
+    const errorParam = params.get('error');
+    const codeParam = params.get('code');
+    
+    if (errorParam === 'qr_not_found' && codeParam) {
+      setRedirectError({ error: errorParam, code: codeParam });
+      // clean up URL search parameters immediately for presentation
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     const stripeStatus = params.get('stripe_status');
     const sessionId = params.get('session_id');
 
@@ -348,6 +358,33 @@ export default function App() {
       )}
  
       {/* Main Page Rendering */}
+      {redirectError && (
+        <div className="max-w-7xl mx-auto px-8 mt-6">
+          <div className="bg-amber-500/10 border border-amber-500/20 text-zinc-100 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-amber-500/5 animate-in fade-in slide-in-from-top duration-300">
+            <div className="flex items-start gap-4">
+              <div className="p-2.5 bg-amber-500/15 rounded-xl text-amber-400 shrink-0 border border-amber-500/20">
+                <AlertCircle className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-sm text-zinc-100 tracking-tight flex items-center gap-1.5 flex-wrap">
+                  Campaign Redirection Alert
+                </h4>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-3xl font-medium">
+                  We detected that a dynamic link scan for <span className="font-mono text-amber-300 font-bold bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-500/20">/r/{redirectError.code}</span> was attempted, but that code was not found on this server.
+                  If this link points to <span className="font-semibold text-zinc-200">rightpdfkit.com</span> and was created in your browser recently, opening your **Console App / Dashboard** below will automatically re-seed your locally-saved campaigns on the server!
+                </p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setRedirectError(null)}
+              className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700/80 active:scale-[0.98] text-zinc-200 font-bold uppercase tracking-widest text-[10px] rounded-xl border border-zinc-700/60 transition-all cursor-pointer select-none hover:text-white"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       <main>
         {view === 'lead' ? (
           <LeadCapture qrId={activeQrId} />
