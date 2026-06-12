@@ -127,7 +127,7 @@ export default function BillingPortal({
       desc: 'Test the base QR generator engine with standard redirections.',
       features: [
         'Max 2 Dynamic QR Campaigns',
-        'Standard custom QR destination URLs',
+        'Max 30 redirection scans / QR',
         'Basic landing analytics summary',
         'Standard QR layout downloads',
       ],
@@ -144,10 +144,10 @@ export default function BillingPortal({
       desc: 'Perfect for growing businesses deploying local signage and flyers.',
       features: [
         'Up to 10 Dynamic QR Campaigns',
+        'Max 150 redirection scans / QR',
         'Instant post-print URL updates',
         'Basic device and country logs',
         'Integrated basic routing schemes',
-        'Email Support',
       ],
       badge: 'Popular',
       color: 'border-indigo-950/40 bg-zinc-900/40',
@@ -162,11 +162,11 @@ export default function BillingPortal({
       desc: 'Ultimate control for marketing consultants and scaling agencies.',
       features: [
         'UNLIMITED Dynamic QRs',
+        'UNLIMITED redirection scans',
         'Instant post-print URL updates',
         'Advanced device & referrer analytics',
         'Lead Capture interactive forms',
         'Premium QR custom styles & margins',
-        'Priority 24/7 technical support',
         'Instant CSV files analytics exports',
       ],
       badge: 'Ultimate Power',

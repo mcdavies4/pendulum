@@ -1561,7 +1561,12 @@ export default function Dashboard({
 
                       {/* Display Runs / Scans */}
                       <div className="text-center shrink-0 bg-zinc-950 px-3.5 py-2 border border-zinc-900 rounded-xl">
-                        <span className="text-sm font-bold font-mono text-indigo-400 block tracking-tight">{qr.scanCount || 0}</span>
+                        <span className="text-sm font-bold font-mono text-indigo-400 block tracking-tight">
+                          {qr.scanCount || 0}
+                          <span className="text-zinc-500 font-normal text-[10px]/none ml-0.5">
+                            /{subscriptionTier === 'plus' ? '∞' : subscriptionTier === 'starter' ? '150' : '30'}
+                          </span>
+                        </span>
                         <span className="text-[8px] text-zinc-500 font-black uppercase font-mono tracking-widest block">Scans</span>
                       </div>
                     </div>
@@ -1788,9 +1793,14 @@ export default function Dashboard({
 
                         {/* Click Analytics */}
                         <td className="py-4 px-4 text-center font-mono font-bold text-white text-sm">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <span>{qr.scanCount || 0}</span>
-                            <span className="text-[10px] text-zinc-500 font-semibold uppercase">runs</span>
+                          <div className="flex flex-col items-center justify-center">
+                            <div className="flex items-center gap-1.5">
+                              <span>{qr.scanCount || 0}</span>
+                              <span className="text-[10px] text-zinc-500 font-normal">
+                                / {subscriptionTier === 'plus' ? '∞' : subscriptionTier === 'starter' ? '150' : '30'}
+                              </span>
+                            </div>
+                            <span className="text-[8px] text-zinc-500 uppercase tracking-widest block font-black mt-0.5 scale-90">limit</span>
                           </div>
                         </td>
 

@@ -159,23 +159,48 @@ app.get('/r', (req: Request, res: Response) => {
       referrer,
     };
 
-    // Enforce redirection limit on free tiers: Capped at 100 scans per campaign.
-    let isOwnerPaid = false;
+    // Enforce multi-tier redirection limits of scans per campaign
+    let ownerTier: 'free' | 'starter' | 'plus' = 'free';
     if (qr.ownerId) {
       if (qr.ownerId.startsWith('user_')) {
         const owner = db.getUserById(qr.ownerId);
-        if (owner && (owner.isPaid || owner.email.toLowerCase() === 'support@odogwu.online' || owner.email.toLowerCase() === 'azubuikedavies@gmail.com')) {
-          isOwnerPaid = true;
+        if (owner) {
+          if (owner.email.toLowerCase() === 'support@odogwu.online' || owner.email.toLowerCase() === 'azubuikedavies@gmail.com') {
+            ownerTier = 'plus';
+          } else {
+            ownerTier = owner.subscriptionTier || (owner.isPaid ? 'plus' : 'free');
+          }
         }
       } else {
         // Exempt default_user/demo or anonymous seeds so that initial workspace dashboard looks amazing
-        isOwnerPaid = true;
+        ownerTier = 'plus';
       }
     } else {
-      isOwnerPaid = true;
+      ownerTier = 'plus';
     }
 
-    if (!isOwnerPaid && (qr.scanCount || 0) >= 100) {
+    let isLimitReached = false;
+    let limitMessage = '';
+    let maxScans = 30;
+    let upgradeNotice = '';
+
+    if (ownerTier === 'free') {
+      maxScans = 30;
+      if ((qr.scanCount || 0) >= maxScans) {
+        isLimitReached = true;
+        limitMessage = `This dynamic QR campaign operates on a standard Free Trial account and has reached its redirection cap of 30 scans.`;
+        upgradeNotice = `To resume instant redirects for your scanners, remove limitations, and enjoy custom QR designs, upgrade to Pro Starter or Pro Plus.`;
+      }
+    } else if (ownerTier === 'starter') {
+      maxScans = 150;
+      if ((qr.scanCount || 0) >= maxScans) {
+        isLimitReached = true;
+        limitMessage = `This dynamic QR campaign operates on a Pro Starter account and has reached its campaign redirection cap of 150 scans.`;
+        upgradeNotice = `To unlock unlimited scale, unlimited redirections for all physical assets, and priority support, upgrade to Pro Plus.`;
+      }
+    }
+
+    if (isLimitReached) {
       res.setHeader('Content-Type', 'text/html');
       return res.status(403).send(`
         <!DOCTYPE html>
@@ -235,27 +260,29 @@ app.get('/r', (req: Request, res: Response) => {
             }
             .badge {
               display: inline-block;
-              background-color: #3f3f46;
+              background-color: #ef4444;
               color: #f4f4f5;
               padding: 4px 12px;
               border-radius: 9999px;
-              font-size: 12px;
-              font-weight: 500;
+              font-size: 11px;
+              font-weight: 700;
+              letter-spacing: 0.05em;
+              text-transform: uppercase;
               margin-bottom: 16px;
             }
             .btn {
               display: inline-block;
-              background-color: #10b981;
+              background-color: #4f46e5;
               color: #ffffff;
               text-decoration: none;
-              font-weight: 500;
+              font-weight: 600;
               font-size: 14px;
               padding: 12px 24px;
-              border-radius: 6px;
+              border-radius: 8px;
               transition: background-color 0.2s;
             }
             .btn:hover {
-              background-color: #059669;
+              background-color: #4338ca;
             }
             .footer {
               margin-top: 32px;
@@ -267,10 +294,10 @@ app.get('/r', (req: Request, res: Response) => {
         <body>
           <div class="card">
             <div class="logo">Pendulum<span>QR</span></div>
-            <div class="badge">Scan Limit Reached</div>
+            <div class="badge">Scan cap reached</div>
             <h1>Campaign Redirect Paused</h1>
-            <p>This dynamic QR campaign operates on a standard free trial account and has reached its standard redirection cap (max 100 scans).</p>
-            <p style="font-size: 14px; color: #71717a;">To resume instant redirects for your visitors, unlock custom branded URLs, and enjoy unlimited dynamic targets, please upgrade the campaign owner account to Premium.</p>
+            <p>${limitMessage}</p>
+            <p style="font-size: 14px; color: #71717a;">${upgradeNotice}</p>
             <a href="/" class="btn">Upgrade Member Portal</a>
             <div class="footer">Powered by Pendulum QR &bull; Instant Mobile Redirection</div>
           </div>
