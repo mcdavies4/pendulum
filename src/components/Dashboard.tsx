@@ -11,7 +11,8 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface DashboardProps {
   isPaid: boolean;
-  onUpgrade: (subId: string) => void;
+  subscriptionTier?: 'free' | 'starter' | 'plus';
+  onUpgrade: (subId: string, planTier?: 'starter' | 'plus') => void;
   onCancelPremium: () => void;
   onOpenAuth?: () => void;
   activeTheme?: 'light' | 'dark';
@@ -24,7 +25,14 @@ const VERTICALS = [
   { id: 'event', title: 'Concert & Event Flyers', tagline: 'Register devices to view tickets & maps.', icon: Calendar, sampleName: 'Retro Fest Poster QR', sampleUrl: 'https://example.com/tickets/festival', color: 'border-purple-300 dark:border-purple-800' },
 ];
 
-export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAuth, activeTheme = 'dark' }: DashboardProps) {
+export default function Dashboard({ 
+  isPaid, 
+  subscriptionTier = 'free', 
+  onUpgrade, 
+  onCancelPremium, 
+  onOpenAuth, 
+  activeTheme = 'dark' 
+}: DashboardProps) {
   // Application Data States
   const [qrcodes, setQrcodes] = useState<QRCodeRecord[]>([]);
   const [scans, setScans] = useState<ScanLog[]>([]);
@@ -277,9 +285,14 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
     e.preventDefault();
     setFormError(null);
 
-    // Free tier limitation check!
-    if (!isPaid && qrcodes.length >= 2) {
-      setFormError('Unlock Premium to bypass standard free tier restrictions (Max 2 codes).');
+    // Tiered limitation checks!
+    if (subscriptionTier === 'free' && qrcodes.length >= 2) {
+      setFormError('Unlock Pro Starter or Pro Plus to bypass Free tier restrictions (Max 2 campaigns).');
+      setShowBilling(true);
+      return;
+    }
+    if (subscriptionTier === 'starter' && qrcodes.length >= 10) {
+      setFormError('Upgrade to Pro Plus to bypass Pro Starter restrictions (Max 10 campaigns).');
       setShowBilling(true);
       return;
     }
@@ -855,23 +868,43 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
         </div>
       )}
 
-      {/* Check free tier banner block */}
-      {!isPaid && qrcodes.length >= 2 && (
-        <div className="mb-6 p-5 bg-amber-500/10 border border-amber-550/30 rounded-2xl shadow-premium flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+      {/* Check tiered limit banner blocks */}
+      {subscriptionTier === 'free' && qrcodes.length >= 2 && (
+        <div className="mb-6 p-5 bg-amber-500/10 border border-amber-550/30 rounded-2xl shadow-premium flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in text-left">
           <div className="flex items-start gap-3">
             <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0" />
             <div>
-              <p className="text-sm font-black uppercase tracking-tight text-amber-400">Free Campaign Cap Reached</p>
-              <p className="text-[11px] text-zinc-300 font-medium mt-1">
-                You have {qrcodes.length} dynamic codes active. Free accounts are limited to 2 campaigns. To deploy further print assets, activate a Premium license.
+              <p className="text-sm font-black uppercase tracking-tight text-amber-400 font-bold">Free Campaign Cap Reached</p>
+              <p className="text-[11px] text-zinc-300 font-semibold mt-1">
+                You have {qrcodes.length} dynamic codes active. Free accounts are limited to 2 campaigns. To deploy further printed QR codes, upgrade to Pro Starter or Pro Plus.
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowBilling(true)}
-            className="px-4 py-2 bg-amber-400 hover:bg-amber-300 border border-amber-500/40 text-black font-bold text-xs uppercase tracking-wider rounded-xl shadow-premium transition-all text-center shrink-0 cursor-pointer"
+            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl shadow-premium transition-all text-center shrink-0 cursor-pointer"
           >
-            Upgrade Online • $29/mo
+            Upgrade Plan • from $12/mo
+          </button>
+        </div>
+      )}
+
+      {subscriptionTier === 'starter' && qrcodes.length >= 10 && (
+        <div className="mb-6 p-5 bg-indigo-500/10 border border-indigo-550/30 rounded-2xl shadow-premium flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in text-left">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-6 h-6 text-indigo-400 shrink-0" />
+            <div>
+              <p className="text-sm font-black uppercase tracking-tight text-indigo-400 font-bold">Pro Starter Cap Reached</p>
+              <p className="text-[11px] text-zinc-300 font-semibold mt-1">
+                You have {qrcodes.length} dynamic codes active. Pro Starter accounts are limited to 10 campaigns. To scale your campaigns and deploy unlimited assets, upgrade to Pro Plus.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowBilling(true)}
+            className="px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl shadow-premium transition-all text-center shrink-0 cursor-pointer"
+          >
+            Upgrade to Pro Plus • $29/mo
           </button>
         </div>
       )}
@@ -887,6 +920,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
           >
             <BillingPortal 
               isPaid={isPaid} 
+              subscriptionTier={subscriptionTier}
               onUpgradeSuccess={onUpgrade} 
               onCancelPremium={onCancelPremium}
               onClose={() => setShowBilling(false)}
@@ -1214,6 +1248,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
                       value={newQrUrl ? `${window.location.origin}/r/${newQrSlug || 'slug_sample'}` : `${window.location.origin}/r/pending`}
                       qrId="preview_canvas"
                       size={140}
+                      minimal={true}
                     />
                   </div>
 
@@ -1249,7 +1284,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
             </div>
           </div>
           <span className="text-[10px] font-bold text-zinc-300 bg-zinc-800 border border-zinc-700 rounded-full px-2.5 py-0.5">
-            {isPaid ? 'Unlimited' : '2 Max'}
+            {subscriptionTier === 'plus' ? 'Unlimited' : subscriptionTier === 'starter' ? '10 Max' : '2 Max'}
           </span>
         </div>
 

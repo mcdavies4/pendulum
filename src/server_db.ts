@@ -11,6 +11,7 @@ export interface UserRecord {
   createdAt: string;
   twoFactorEnabled?: boolean;
   twoFactorSecret?: string;
+  subscriptionTier?: 'free' | 'starter' | 'plus';
 }
 
 const isVercel = !!process.env.VERCEL;

@@ -10,10 +10,16 @@ import { apiFetch, getAccountBackups } from './lib/api';
 export default function App() {
   // Path router state
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
-  const [isPaid, setIsPaid] = useState<boolean>(() => {
-    const saved = localStorage.getItem('pendulum_is_paid');
-    return saved === 'true'; // Fallback to false by default
+  
+  const [subscriptionTier, setSubscriptionTier] = useState<'free' | 'starter' | 'plus'>(() => {
+    const saved = localStorage.getItem('pendulum_subscription_tier');
+    if (saved === 'starter') return 'starter';
+    if (saved === 'plus') return 'plus';
+    const legacyPaid = localStorage.getItem('pendulum_is_paid');
+    return legacyPaid === 'true' ? 'plus' : 'free';
   });
+
+  const isPaid = subscriptionTier !== 'free';
 
   // User Auth States
   const [userEmail, setUserEmail] = useState<string | null>(() => {
@@ -75,13 +81,15 @@ export default function App() {
     localStorage.setItem('pendulum_theme_mode', themeMode);
   }, [activeTheme, themeMode]);
 
-  const handleLoginSuccess = (uid: string, email: string, paidState: boolean) => {
+  const handleLoginSuccess = (uid: string, email: string, paidState: boolean, planTier?: 'free' | 'starter' | 'plus') => {
     setUserId(uid);
     setUserEmail(email);
-    setIsPaid(paidState);
+    const tier = planTier || (paidState ? 'plus' : 'free');
+    setSubscriptionTier(tier);
     localStorage.setItem('pendulum_user_id', uid);
     localStorage.setItem('pendulum_user_email', email);
     localStorage.setItem('pendulum_is_paid', paidState ? 'true' : 'false');
+    localStorage.setItem('pendulum_subscription_tier', tier);
     localStorage.setItem('pendulum_show_landing', 'false'); // auto-bypass landing on auth success!
 
     // Securely migrate client-side backups from visitor fallback to user account
@@ -101,11 +109,12 @@ export default function App() {
     localStorage.removeItem('pendulum_user_id');
     localStorage.removeItem('pendulum_user_email');
     localStorage.removeItem('pendulum_is_paid');
+    localStorage.removeItem('pendulum_subscription_tier');
     localStorage.removeItem('pendulum_stripe_sub_id');
     localStorage.removeItem('pendulum_show_landing'); // reset so they see intro on next click!
     setUserId(null);
     setUserEmail(null);
-    setIsPaid(false);
+    setSubscriptionTier('free');
     window.location.reload();
   };
 
@@ -115,14 +124,16 @@ export default function App() {
   };
 
   // Handle premium upgrade toggles
-  const handleUpgrade = (subscriptionId: string) => {
-    setIsPaid(true);
+  const handleUpgrade = (subscriptionId: string, planTier: 'starter' | 'plus' = 'plus') => {
+    setSubscriptionTier(planTier);
+    localStorage.setItem('pendulum_subscription_tier', planTier);
     localStorage.setItem('pendulum_is_paid', 'true');
     localStorage.setItem('pendulum_stripe_sub_id', subscriptionId);
   };
 
   const handleCancelPremium = () => {
-    setIsPaid(false);
+    setSubscriptionTier('free');
+    localStorage.setItem('pendulum_subscription_tier', 'free');
     localStorage.setItem('pendulum_is_paid', 'false');
     localStorage.removeItem('pendulum_stripe_sub_id');
   };
@@ -155,10 +166,12 @@ export default function App() {
         if (data.loggedIn && data.user) {
           setUserId(data.user.id);
           setUserEmail(data.user.email);
-          setIsPaid(data.user.isPaid);
+          const tier = data.user.subscriptionTier || (data.user.isPaid ? 'plus' : 'free');
+          setSubscriptionTier(tier);
           localStorage.setItem('pendulum_user_id', data.user.id);
           localStorage.setItem('pendulum_user_email', data.user.email);
           localStorage.setItem('pendulum_is_paid', data.user.isPaid ? 'true' : 'false');
+          localStorage.setItem('pendulum_subscription_tier', tier);
         } else {
           // If the server session is deactivated but local state persists, clean up client values
           const localUid = localStorage.getItem('pendulum_user_id');
@@ -166,10 +179,11 @@ export default function App() {
             localStorage.removeItem('pendulum_user_id');
             localStorage.removeItem('pendulum_user_email');
             localStorage.removeItem('pendulum_is_paid');
+            localStorage.removeItem('pendulum_subscription_tier');
             localStorage.removeItem('pendulum_stripe_sub_id');
             setUserId(null);
             setUserEmail(null);
-            setIsPaid(false);
+            setSubscriptionTier('free');
           }
         }
       } catch (err) {
@@ -192,15 +206,17 @@ export default function App() {
 
     const stripeStatus = params.get('stripe_status');
     const sessionId = params.get('session_id');
+    const planIdParam = params.get('plan_id') || 'plus';
 
     if (stripeStatus === 'success' && sessionId) {
       // Async verify session with backend secure stripe endpoint
-      apiFetch(`/api/stripe/verify-session?session_id=${sessionId}`)
+      apiFetch(`/api/stripe/verify-session?session_id=${sessionId}&plan_id=${planIdParam}`)
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.subscriptionId) {
-            handleUpgrade(data.subscriptionId);
-            alert('🎉 Congratulations! Your Pendulum Pro plan has been activated successfully via Stripe.');
+            const finalPlan = data.planId || planIdParam;
+            handleUpgrade(data.subscriptionId, finalPlan as 'starter' | 'plus');
+            alert(`🎉 Congratulations! Your Pendulum ${finalPlan === 'starter' ? 'Pro Starter' : 'Pro Plus'} plan has been activated successfully via Stripe.`);
           } else {
             console.error('Stripe verification failed:', data.error);
           }
@@ -414,6 +430,7 @@ export default function App() {
         ) : (
           <Dashboard 
             isPaid={isPaid} 
+            subscriptionTier={subscriptionTier}
             onUpgrade={handleUpgrade}
             onCancelPremium={handleCancelPremium}
             onOpenAuth={() => setIsAuthOpen(true)}

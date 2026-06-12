@@ -6,7 +6,7 @@ import { apiFetch, addAccountBackup } from '../lib/api';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (userId: string, email: string, isPaid: boolean) => void;
+  onSuccess: (userId: string, email: string, isPaid: boolean, subscriptionTier?: 'free' | 'starter' | 'plus') => void;
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
@@ -71,12 +71,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           localStorage.setItem('pendulum_user_id', data.user.id);
           localStorage.setItem('pendulum_user_email', data.user.email);
           localStorage.setItem('pendulum_is_paid', data.user.isPaid ? 'true' : 'false');
+          localStorage.setItem('pendulum_subscription_tier', data.user.subscriptionTier || 'free');
           
           if (data.backup) {
             addAccountBackup(data.backup);
           }
           
-          onSuccess(data.user.id, data.user.email, data.user.isPaid);
+          onSuccess(data.user.id, data.user.email, data.user.isPaid, data.user.subscriptionTier);
           onClose();
         }
       } else if (mode === 'two-factor') {
@@ -106,12 +107,13 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           localStorage.setItem('pendulum_user_id', data.user.id);
           localStorage.setItem('pendulum_user_email', data.user.email);
           localStorage.setItem('pendulum_is_paid', data.user.isPaid ? 'true' : 'false');
+          localStorage.setItem('pendulum_subscription_tier', data.user.subscriptionTier || 'free');
           
           if (data.backup) {
             addAccountBackup(data.backup);
           }
           
-          onSuccess(data.user.id, data.user.email, data.user.isPaid);
+          onSuccess(data.user.id, data.user.email, data.user.isPaid, data.user.subscriptionTier);
           onClose();
         }
       } else if (mode === 'forgot') {

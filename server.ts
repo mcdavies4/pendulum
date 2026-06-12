@@ -324,6 +324,7 @@ app.get('/r', (req: Request, res: Response) => {
   app.post('/api/stripe/create-checkout-session', async (req: Request, res: Response) => {
     try {
       const stripe = getStripe();
+      const planId = req.query.planId as string || req.body.planId as string || 'plus';
       
       let baseUrl = process.env.APP_URL || '';
       if (!baseUrl) {
@@ -332,6 +333,16 @@ app.get('/r', (req: Request, res: Response) => {
       }
       baseUrl = baseUrl.replace(/\/$/, '');
 
+      let amount = 2900;
+      let planName = 'Pendulum QR Pro Plus (Unlimited)';
+      let planDesc = 'Unlock unlimited dynamic redirect QR loops, advanced metrics & unlimited campaign slots.';
+
+      if (planId === 'starter') {
+        amount = 1200;
+        planName = 'Pendulum QR Pro Starter (Lite)';
+        planDesc = 'Create up to 10 campaigns, use basic country redirects and standard analytics.';
+      }
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items: [
@@ -339,10 +350,10 @@ app.get('/r', (req: Request, res: Response) => {
             price_data: {
               currency: 'usd',
               product_data: {
-                name: 'Pendulum QR Premium (Subscription)',
-                description: 'Unlock unlimited dynamic redirect QR loops, advanced metric telemetry & custom branded verticals.',
+                name: planName,
+                description: planDesc,
               },
-              unit_amount: 2900, // $29.00 USD
+              unit_amount: amount,
               recurring: {
                 interval: 'month',
               },
@@ -351,7 +362,7 @@ app.get('/r', (req: Request, res: Response) => {
           },
         ],
         mode: 'subscription',
-        success_url: `${baseUrl}/?stripe_status=success&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${baseUrl}/?stripe_status=success&session_id={CHECKOUT_SESSION_ID}&plan_id=${planId}`,
         cancel_url: `${baseUrl}/?stripe_status=cancel`,
       });
 
@@ -364,6 +375,7 @@ app.get('/r', (req: Request, res: Response) => {
 
   app.get('/api/stripe/verify-session', async (req: Request, res: Response) => {
     const sessionId = req.query.session_id as string;
+    const planId = req.query.plan_id as string || 'plus';
     if (!sessionId) {
       return res.status(400).json({ error: 'Session ID parameter is required.' });
     }
@@ -378,12 +390,17 @@ app.get('/r', (req: Request, res: Response) => {
         // Link authenticated user to paid status in the database persistence
         const userId = req.headers['x-visitor-id'] as string;
         if (userId && userId.startsWith('user_')) {
-          db.updateUser(userId, { isPaid: true, stripeSubscriptionId: subscriptionId });
+          db.updateUser(userId, { 
+            isPaid: true, 
+            stripeSubscriptionId: subscriptionId,
+            subscriptionTier: planId as 'starter' | 'plus'
+          });
         }
 
         return res.status(200).json({
           success: true,
           subscriptionId,
+          planId
         });
       } else {
         return res.status(200).json({
@@ -431,18 +448,22 @@ app.get('/r', (req: Request, res: Response) => {
           db.migrateVisitorQRCodes(visitorId, existingUser.id);
         }
 
+        const tier = existingUser.subscriptionTier || (existingUser.isPaid ? 'plus' : 'free');
+
         return res.status(201).json({
           success: true,
           user: {
             id: existingUser.id,
             email: existingUser.email,
             isPaid: existingUser.isPaid,
+            subscriptionTier: tier
           },
           backup: {
             id: existingUser.id,
             email: existingUser.email,
             passwordHash: correctHash,
             isPaid: existingUser.isPaid,
+            subscriptionTier: tier,
             createdAt: existingUser.createdAt
           }
         });
@@ -458,6 +479,7 @@ app.get('/r', (req: Request, res: Response) => {
       email: cleanEmail,
       passwordHash: hashPassword(password),
       isPaid: isProFounder ? true : false,
+      subscriptionTier: (isProFounder ? 'plus' : 'free') as 'free' | 'starter' | 'plus',
       createdAt: new Date().toISOString(),
     };
 
@@ -474,12 +496,14 @@ app.get('/r', (req: Request, res: Response) => {
         id: userRecord.id,
         email: userRecord.email,
         isPaid: userRecord.isPaid,
+        subscriptionTier: userRecord.subscriptionTier
       },
       backup: {
         id: userRecord.id,
         email: userRecord.email,
         passwordHash: userRecord.passwordHash,
         isPaid: userRecord.isPaid,
+        subscriptionTier: userRecord.subscriptionTier,
         createdAt: userRecord.createdAt
       }
     });
@@ -537,12 +561,15 @@ app.get('/r', (req: Request, res: Response) => {
       db.migrateVisitorQRCodes(visitorId, user.id);
     }
 
+    const tier = user.subscriptionTier || (user.isPaid ? 'plus' : 'free');
+
     res.status(200).json({
       success: true,
       user: {
         id: user.id,
         email: user.email,
         isPaid: user.isPaid,
+        subscriptionTier: tier,
         twoFactorEnabled: !!user.twoFactorEnabled
       },
       backup: {
@@ -550,6 +577,7 @@ app.get('/r', (req: Request, res: Response) => {
         email: user.email,
         passwordHash: user.passwordHash,
         isPaid: user.isPaid,
+        subscriptionTier: tier,
         createdAt: user.createdAt,
         twoFactorEnabled: !!user.twoFactorEnabled
       }
@@ -676,6 +704,7 @@ app.get('/r', (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         isPaid: user.isPaid,
+        subscriptionTier: user.subscriptionTier || (user.isPaid ? 'plus' : 'free'),
         twoFactorEnabled: !!user.twoFactorEnabled
       }
     });
@@ -712,12 +741,15 @@ app.get('/r', (req: Request, res: Response) => {
       db.migrateVisitorQRCodes(visitorId, user.id);
     }
 
+    const tier = user.subscriptionTier || (user.isPaid ? 'plus' : 'free');
+
     res.status(200).json({
       success: true,
       user: {
         id: user.id,
         email: user.email,
         isPaid: user.isPaid,
+        subscriptionTier: tier,
         twoFactorEnabled: true
       },
       backup: {
@@ -725,6 +757,7 @@ app.get('/r', (req: Request, res: Response) => {
         email: user.email,
         passwordHash: user.passwordHash,
         isPaid: user.isPaid,
+        subscriptionTier: tier,
         createdAt: user.createdAt,
         twoFactorEnabled: true
       }
