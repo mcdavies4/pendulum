@@ -108,18 +108,23 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       const storageKey = `pendulum_qrcode_backup_${activeUserOrGuestId}`;
       
       if (Array.isArray(qrsData)) {
-        if (qrsData.length === 0) {
-          // Empty server database, check if client has backing records to restore!
-          let localSavedBackup = localStorage.getItem(storageKey);
-          if (!localSavedBackup && userId && visitorId && userId !== visitorId) {
-            localSavedBackup = localStorage.getItem(`pendulum_qrcode_backup_${visitorId}`);
-          }
-          if (localSavedBackup) {
-            try {
-              const parsedBackupArr = JSON.parse(localSavedBackup);
-              if (Array.isArray(parsedBackupArr) && parsedBackupArr.length > 0) {
-                console.log("[Pendulum Sandbox Sync] Re-seeding local server container with client-side dynamic QR links...", parsedBackupArr);
-                for (const item of parsedBackupArr) {
+        let localSavedBackup = localStorage.getItem(storageKey);
+        if (!localSavedBackup && userId && visitorId && userId !== visitorId) {
+          localSavedBackup = localStorage.getItem(`pendulum_qrcode_backup_${visitorId}`);
+        }
+        
+        if (localSavedBackup) {
+          try {
+            const parsedBackupArr = JSON.parse(localSavedBackup);
+            if (Array.isArray(parsedBackupArr) && parsedBackupArr.length > 0) {
+              // Intelligently identify any campaign records present in client backups but missing on the server
+              const missingQrs = parsedBackupArr.filter(back => {
+                return back && back.id && !qrsData.some((srv: any) => srv.id === back.id);
+              });
+
+              if (missingQrs.length > 0) {
+                console.log("[Pendulum Sandbox Sync] Re-seeding local server container with missing client-side dynamic QR links...", missingQrs);
+                for (const item of missingQrs) {
                   // Re-create each dynamic link on the restarted server instance on the fly
                   await apiFetch('/api/qrcodes', {
                     method: 'POST',
@@ -140,17 +145,16 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
                 if (refetchRes.ok) {
                   const restoredQrs = await refetchRes.json();
                   qrsData = restoredQrs;
-                  localStorage.setItem(storageKey, JSON.stringify(restoredQrs));
                 }
               }
-            } catch (backupRestoreErr) {
-              console.error('[Pendulum Sandbox Sync] Sync recovery failed', backupRestoreErr);
             }
+          } catch (backupRestoreErr) {
+            console.error('[Pendulum Sandbox Sync] Sync recovery failed', backupRestoreErr);
           }
-        } else {
-          // Keeps local cache fully updated with current cloud states
-          localStorage.setItem(storageKey, JSON.stringify(qrsData));
         }
+
+        // Keep local cache fully updated with current cloud states
+        localStorage.setItem(storageKey, JSON.stringify(qrsData));
       }
 
       setQrcodes(qrsData);
@@ -1344,7 +1348,12 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
             <h3 className="text-md font-black uppercase tracking-wider text-white italic">
               Active Redirect loops ({qrcodes.length})
             </h3>
-            <p className="text-[11px] text-zinc-400 font-semibold mt-1">Physical tracking matrix. Swapping coordinates instantly updates printed code destinations.</p>
+            <p className="text-[11px] text-zinc-400 font-semibold mt-1">
+              Physical tracking matrix. Swapping coordinates instantly updates printed code destinations.
+              <span className="text-indigo-400 block mt-1">
+                💡 <strong>Important for Testing:</strong> Always open the applet in a <strong>new browser tab</strong> to test external redirects (such as google.com), as browsers block external websites from loading within the sandboxed live-preview iframe.
+              </span>
+            </p>
           </div>
           <span className="text-[10px] text-indigo-400 bg-zinc-900/60 border border-zinc-800 rounded-xl py-1.5 px-3.5 font-mono font-black uppercase tracking-wider">
             PRO ENDPOINTS: /r/:id
