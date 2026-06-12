@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, Lock, LogIn, UserPlus, AlertCircle, Sparkles, Eye, EyeOff, KeyRound, CheckCircle2 } from 'lucide-react';
-import { apiFetch } from '../lib/api';
+import { apiFetch, addAccountBackup } from '../lib/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -61,6 +61,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           localStorage.setItem('pendulum_user_email', data.user.email);
           localStorage.setItem('pendulum_is_paid', data.user.isPaid ? 'true' : 'false');
           
+          if (data.backup) {
+            addAccountBackup(data.backup);
+          }
+          
           onSuccess(data.user.id, data.user.email, data.user.isPaid);
           onClose();
         }
@@ -112,6 +116,10 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
         if (!response.ok) {
           throw new Error(data.error || 'Password reset failed.');
+        }
+
+        if (data.backup) {
+          addAccountBackup(data.backup);
         }
 
         setSuccessMessage('Your password has been successfully reset! You can now log in.');

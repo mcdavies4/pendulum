@@ -16,6 +16,36 @@ export const getVisitorId = (): string => {
   return id;
 };
 
+export const addAccountBackup = (backup: { id: string; email: string; passwordHash: string; isPaid: boolean; createdAt?: string }) => {
+  if (typeof window === 'undefined' || !backup || !backup.email) return;
+  try {
+    const raw = localStorage.getItem('pendulum_backup_accounts');
+    const list = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(list)) {
+      localStorage.setItem('pendulum_backup_accounts', JSON.stringify([backup]));
+      return;
+    }
+    
+    // Filter out existing backup on same email and replace it
+    const filtered = list.filter((item: any) => item && item.email && item.email.toLowerCase() !== backup.email.toLowerCase());
+    filtered.push(backup);
+    localStorage.setItem('pendulum_backup_accounts', JSON.stringify(filtered));
+  } catch (err) {
+    console.error('Failed to save local account credentials backup:', err);
+  }
+};
+
+export const getAccountBackups = (): Array<{ id: string; email: string; passwordHash: string; isPaid: boolean; createdAt?: string }> => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('pendulum_backup_accounts');
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    return [];
+  }
+};
+
 export const apiFetch = (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
   const visitorId = getVisitorId();
   const cleanInit = init || {};

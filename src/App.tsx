@@ -5,7 +5,7 @@ import AuthModal from './components/AuthModal';
 import LandingPage from './components/LandingPage';
 import { Sparkles, Compass, ShieldCheck, Mail, LogOut, User, Sun, Moon, Clock, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
-import { apiFetch } from './lib/api';
+import { apiFetch, getAccountBackups } from './lib/api';
 
 export default function App() {
   // Path router state
@@ -133,10 +133,25 @@ export default function App() {
       setCurrentPath(window.location.pathname);
     };
 
-    // Synchronize authentication and subscription state with backend secure database
-    apiFetch('/api/auth/me')
-      .then((res) => res.json())
-      .then((data) => {
+    const runSessionSyncAndRecovery = async () => {
+      // 1. Sync any local accounts we hold, restoring them on the server if it has booted fresh!
+      const backups = getAccountBackups();
+      if (backups.length > 0) {
+        try {
+          await apiFetch('/api/auth/sync-backups', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accounts: backups })
+          });
+        } catch (err) {
+          console.error('Failed to sync accounts list backup with server node:', err);
+        }
+      }
+
+      // 2. Query/restore active session state
+      try {
+        const res = await apiFetch('/api/auth/me');
+        const data = await res.json();
         if (data.loggedIn && data.user) {
           setUserId(data.user.id);
           setUserEmail(data.user.email);
@@ -157,10 +172,12 @@ export default function App() {
             setIsPaid(false);
           }
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error('Failed to sync authentication state with server nodes:', err);
-      });
+      }
+    };
+
+    runSessionSyncAndRecovery();
 
     // Check for search parameter errors and Stripe Checkout success callbacks
     const params = new URLSearchParams(window.location.search);

@@ -448,6 +448,13 @@ app.get('/r', (req: Request, res: Response) => {
         id: userRecord.id,
         email: userRecord.email,
         isPaid: userRecord.isPaid,
+      },
+      backup: {
+        id: userRecord.id,
+        email: userRecord.email,
+        passwordHash: userRecord.passwordHash,
+        isPaid: userRecord.isPaid,
+        createdAt: userRecord.createdAt
       }
     });
   });
@@ -478,6 +485,13 @@ app.get('/r', (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         isPaid: user.isPaid,
+      },
+      backup: {
+        id: user.id,
+        email: user.email,
+        passwordHash: user.passwordHash,
+        isPaid: user.isPaid,
+        createdAt: user.createdAt
       }
     });
   });
@@ -546,9 +560,18 @@ app.get('/r', (req: Request, res: Response) => {
     db.updateUser(user.id, { passwordHash: hashPassword(newPassword) });
     resetCodes.delete(cleanEmail);
 
+    const updatedUser = db.getUserById(user.id) || user;
+
     res.status(200).json({
       success: true,
-      message: 'Your password has been reset successfully. Please log in with your new credentials.'
+      message: 'Your password has been reset successfully. Please log in with your new credentials.',
+      backup: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        passwordHash: updatedUser.passwordHash,
+        isPaid: updatedUser.isPaid,
+        createdAt: updatedUser.createdAt
+      }
     });
   });
 
@@ -595,6 +618,38 @@ app.get('/r', (req: Request, res: Response) => {
         isPaid: user.isPaid,
       }
     });
+  });
+
+  // Local Credentials Synchronizer (Self-healing on server reboots)
+  app.post('/api/auth/sync-backups', (req: Request, res: Response) => {
+    const { accounts } = req.body;
+    if (!accounts || !Array.isArray(accounts)) {
+      return res.status(400).json({ error: 'Accounts array is required.' });
+    }
+
+    let restoredCount = 0;
+    accounts.forEach((acc: any) => {
+      if (acc && acc.id && acc.email && acc.passwordHash) {
+        const cleanEmail = acc.email.trim().toLowerCase();
+        // Look up on server
+        const existingByEmail = db.getUserByEmail(cleanEmail);
+        const existingById = db.getUserById(acc.id);
+
+        if (!existingByEmail && !existingById) {
+          // Re-seed credentials securely
+          db.createUser({
+            id: acc.id,
+            email: cleanEmail,
+            passwordHash: acc.passwordHash,
+            isPaid: !!acc.isPaid,
+            createdAt: acc.createdAt || new Date().toISOString()
+          });
+          restoredCount++;
+        }
+      }
+    });
+
+    res.status(200).json({ success: true, restoredCount });
   });
 
   // Logout Endpoint
