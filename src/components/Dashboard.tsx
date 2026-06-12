@@ -97,9 +97,61 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       const paths = ['/api/qrcodes', '/api/analytics', '/api/leads'];
       const responses = await Promise.all(paths.map(p => apiFetch(p)));
       
-      const qrsData = await responses[0].json();
+      let qrsData = await responses[0].json();
       const analyticsData = await responses[1].json();
       const leadsData = await responses[2].json();
+
+      // Silent client-side cloud container restart/rebuild re-seed fallback:
+      const visitorId = localStorage.getItem('pendulum_visitor_id');
+      const userId = localStorage.getItem('pendulum_user_id');
+      const activeUserOrGuestId = userId || visitorId || 'default_user';
+      const storageKey = `pendulum_qrcode_backup_${activeUserOrGuestId}`;
+      
+      if (Array.isArray(qrsData)) {
+        if (qrsData.length === 0) {
+          // Empty server database, check if client has backing records to restore!
+          let localSavedBackup = localStorage.getItem(storageKey);
+          if (!localSavedBackup && userId && visitorId && userId !== visitorId) {
+            localSavedBackup = localStorage.getItem(`pendulum_qrcode_backup_${visitorId}`);
+          }
+          if (localSavedBackup) {
+            try {
+              const parsedBackupArr = JSON.parse(localSavedBackup);
+              if (Array.isArray(parsedBackupArr) && parsedBackupArr.length > 0) {
+                console.log("[Pendulum Sandbox Sync] Re-seeding local server container with client-side dynamic QR links...", parsedBackupArr);
+                for (const item of parsedBackupArr) {
+                  // Re-create each dynamic link on the restarted server instance on the fly
+                  await apiFetch('/api/qrcodes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      name: item.name,
+                      longUrl: item.longUrl,
+                      id: item.id,
+                      qrType: item.qrType || 'dynamic',
+                      vertical: item.vertical,
+                      leadCaptureEnabled: item.leadCaptureEnabled,
+                      leadFields: item.leadFields || ['name', 'email', 'phone'],
+                    }),
+                  });
+                }
+                // Refetch to populate clean database list
+                const refetchRes = await apiFetch('/api/qrcodes');
+                if (refetchRes.ok) {
+                  const restoredQrs = await refetchRes.json();
+                  qrsData = restoredQrs;
+                  localStorage.setItem(storageKey, JSON.stringify(restoredQrs));
+                }
+              }
+            } catch (backupRestoreErr) {
+              console.error('[Pendulum Sandbox Sync] Sync recovery failed', backupRestoreErr);
+            }
+          }
+        } else {
+          // Keeps local cache fully updated with current cloud states
+          localStorage.setItem(storageKey, JSON.stringify(qrsData));
+        }
+      }
 
       setQrcodes(qrsData);
       setScans(analyticsData.scans || []);

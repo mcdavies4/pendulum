@@ -82,6 +82,16 @@ export default function App() {
     localStorage.setItem('pendulum_user_email', email);
     localStorage.setItem('pendulum_is_paid', paidState ? 'true' : 'false');
     localStorage.setItem('pendulum_show_landing', 'false'); // auto-bypass landing on auth success!
+
+    // Securely migrate client-side backups from visitor fallback to user account
+    const visitorId = localStorage.getItem('pendulum_visitor_id');
+    if (visitorId) {
+      const visitorBackup = localStorage.getItem(`pendulum_qrcode_backup_${visitorId}`);
+      if (visitorBackup) {
+        localStorage.setItem(`pendulum_qrcode_backup_${uid}`, visitorBackup);
+      }
+    }
+
     // Force a clean reload to query actual data records matching the newly authenticated ID!
     window.location.reload();
   };
