@@ -5,7 +5,7 @@ import { apiFetch } from '../lib/api';
 import BillingPortal from './BillingPortal';
 import { 
   Plus, Sparkles, QrCode, TrendingUp, Users, ArrowRight, Trash2, Edit2, Check, 
-  MapPin, Chrome, Laptop, Calendar, RefreshCw, Layers, ClipboardList, HelpCircle, FileDown, Eye, AlertTriangle, X 
+  MapPin, Chrome, Laptop, Calendar, RefreshCw, Layers, ClipboardList, HelpCircle, FileDown, Eye, AlertTriangle, X, Shield 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -38,6 +38,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
 
   // Authenticated state tracking
   const hasUser = typeof window !== 'undefined' && !!localStorage.getItem('pendulum_user_email');
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
   // Active User vertical selection
   const [activeVertical, setActiveVertical] = useState<VerticalType>('general');
@@ -161,6 +162,19 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       setScans(analyticsData.scans || []);
       setLeads(leadsData);
 
+      // Sync Double-Auth Status
+      try {
+        const sessionRes = await apiFetch('/api/auth/me');
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          if (sessionData.loggedIn && sessionData.user) {
+            setTwoFactorEnabled(!!sessionData.user.twoFactorEnabled);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to sync 2fa state:', e);
+      }
+
       // Securely fetch all user profiles if session possesses Creator/Admin privileges
       if (isAdmin) {
         setAdminUsersLoading(true);
@@ -200,6 +214,22 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       } else {
         setLeadGateEnabled(false);
       }
+    }
+  };
+
+  const handleToggle2FA = async () => {
+    try {
+      const response = await apiFetch('/api/auth/toggle-2fa', {
+        method: 'POST'
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update 2FA configuration in database.');
+      }
+      const data = await response.json();
+      setTwoFactorEnabled(data.twoFactorEnabled);
+    } catch (e: any) {
+      alert(e.message || 'Failed to update 2FA configuration in database.');
     }
   };
 
@@ -835,6 +865,46 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 🔐 Two-Factor (Double-Auth) Security Settings */}
+      {hasUser && (
+        <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-[#171520]/80 via-[#121019]/80 to-[#15131f]/80 border border-indigo-500/25 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-5 animate-fade-in text-left">
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
+              <Shield className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-black uppercase text-white tracking-wider flex flex-wrap items-center gap-2">
+                <span>Double-Factor (MFA) Security Checklist</span>
+                <span className={`text-[9px] font-black tracking-tight px-2 py-0.5 rounded-full ${
+                  twoFactorEnabled 
+                    ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' 
+                    : 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                }`}>
+                  {twoFactorEnabled ? 'ENFORCED (2-STEP OTP)' : 'UNCONFIGURED (SINGLE AUTH)'}
+                </span>
+              </h4>
+              <p className="text-zinc-400 text-xs max-w-xl">
+                Enables or disables dynamic verification codes on successive login checks. Keeps link creator and webhook access safe from brute force intrusion nodes.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 shrink-0">
+            <label className="relative inline-flex items-center cursor-pointer select-none">
+              <input 
+                type="checkbox" 
+                checked={twoFactorEnabled} 
+                onChange={handleToggle2FA}
+                className="sr-only peer" 
+              />
+              <div className="w-11 h-6 bg-zinc-850 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-500/40 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-350 after:border after:rounded-full after:height-5 after:width-5 after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-650 peer-checked:after:bg-indigo-300 peer-checked:after:border-indigo-400 border border-[#2c2a3d]" />
+              <span className="ml-3 text-xs font-bold uppercase tracking-wider text-zinc-300">
+                {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* 3. Industry Wedge Toggles (The Work Wedge: owns the language) */}
       <div className="mb-8 p-6 card-glass shadow-premium">

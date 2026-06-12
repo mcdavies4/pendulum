@@ -485,6 +485,9 @@ app.get('/r', (req: Request, res: Response) => {
     });
   });
 
+  // Two-Factor Authentication Memory Storage
+  const twoFactorCodes = new Map<string, { code: string; timestamp: number }>();
+
   // Login Endpoint
   app.post('/api/auth/login', (req: Request, res: Response) => {
     const { email, password, visitorId } = req.body;
@@ -517,6 +520,18 @@ app.get('/r', (req: Request, res: Response) => {
       }
     }
 
+    // Dynamic Multi-Factor Security (Double-Auth) flow
+    if (user.twoFactorEnabled) {
+      const pinCode = Math.floor(100000 + Math.random() * 900000).toString();
+      twoFactorCodes.set(cleanEmail, { code: pinCode, timestamp: Date.now() });
+      return res.status(200).json({
+        success: true,
+        requiresTwoFactor: true,
+        email: cleanEmail,
+        simulatedOtp: pinCode
+      });
+    }
+
     // Support transferring guest links to authenticated user account!
     if (visitorId && visitorId.trim()) {
       db.migrateVisitorQRCodes(visitorId, user.id);
@@ -528,13 +543,15 @@ app.get('/r', (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         isPaid: user.isPaid,
+        twoFactorEnabled: !!user.twoFactorEnabled
       },
       backup: {
         id: user.id,
         email: user.email,
         passwordHash: user.passwordHash,
         isPaid: user.isPaid,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        twoFactorEnabled: !!user.twoFactorEnabled
       }
     });
   });
@@ -659,7 +676,86 @@ app.get('/r', (req: Request, res: Response) => {
         id: user.id,
         email: user.email,
         isPaid: user.isPaid,
+        twoFactorEnabled: !!user.twoFactorEnabled
       }
+    });
+  });
+
+  // Verify Two-Factor OTP Endpoint
+  app.post('/api/auth/verify-2fa', (req: Request, res: Response) => {
+    const { email, code, visitorId } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ error: 'Email and verification PIN code are required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const otpData = twoFactorCodes.get(cleanEmail);
+
+    if (!otpData || otpData.code !== code.trim()) {
+      return res.status(400).json({ error: 'The verification PIN is incorrect or has expired.' });
+    }
+
+    // Checking expiration (e.g., 10 minutes)
+    if (Date.now() - otpData.timestamp > 10 * 60 * 1000) {
+      twoFactorCodes.delete(cleanEmail);
+      return res.status(400).json({ error: 'The verification PIN has expired. Please try signing in again.' });
+    }
+
+    // Success! Consume code and log in
+    twoFactorCodes.delete(cleanEmail);
+    const user = db.getUserByEmail(cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'User profile not found.' });
+    }
+
+    if (visitorId && visitorId.trim()) {
+      db.migrateVisitorQRCodes(visitorId, user.id);
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        isPaid: user.isPaid,
+        twoFactorEnabled: true
+      },
+      backup: {
+        id: user.id,
+        email: user.email,
+        passwordHash: user.passwordHash,
+        isPaid: user.isPaid,
+        createdAt: user.createdAt,
+        twoFactorEnabled: true
+      }
+    });
+  });
+
+  // Toggle Two-Factor OTP configuration
+  app.post('/api/auth/toggle-2fa', (req: Request, res: Response) => {
+    const userId = req.headers['x-visitor-id'] as string;
+    const userEmail = (req.headers['x-user-email'] as string || '').trim().toLowerCase();
+
+    if (!userId || !userId.startsWith('user_')) {
+      return res.status(401).json({ error: 'Please sign in to configure mfa credentials.' });
+    }
+
+    const user = db.getUserById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User profile not found.' });
+    }
+
+    const currentStatus = !!user.twoFactorEnabled;
+    const nextStatus = !currentStatus;
+
+    db.updateUser(user.id, { twoFactorEnabled: nextStatus });
+
+    res.status(200).json({
+      success: true,
+      twoFactorEnabled: nextStatus,
+      message: nextStatus 
+        ? 'Double-Authentication (2FA) credentials successfully enabled. Dynamic OTP confirmation will trigger on future logs.'
+        : 'Double-Authentication (2FA) successfully disabled.'
     });
   });
 

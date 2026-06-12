@@ -9,6 +9,8 @@ export interface UserRecord {
   isPaid: boolean;
   stripeSubscriptionId?: string;
   createdAt: string;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
 }
 
 const isVercel = !!process.env.VERCEL;

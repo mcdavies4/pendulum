@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Mail, Lock, LogIn, UserPlus, AlertCircle, Sparkles, Eye, EyeOff, KeyRound, CheckCircle2 } from 'lucide-react';
+import { X, Mail, Lock, LogIn, UserPlus, AlertCircle, Sparkles, Eye, EyeOff, KeyRound, CheckCircle2, Shield } from 'lucide-react';
 import { apiFetch, addAccountBackup } from '../lib/api';
 
 interface AuthModalProps {
@@ -10,7 +10,7 @@ interface AuthModalProps {
 }
 
 export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps) {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset-code'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot' | 'reset-code' | 'two-factor'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [resetCode, setResetCode] = useState('');
@@ -54,6 +54,52 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
 
         if (!response.ok) {
           throw new Error(data.error || 'Authentication credential validation failed.');
+        }
+
+        if (data.requiresTwoFactor) {
+          setResetCode(''); // Reset input
+          setMode('two-factor');
+          setSuccessMessage('Double-Authentication secure confirmation required. Enter the 6-digit verification PIN.');
+          if (data.simulatedOtp) {
+            setSimulatedCode(data.simulatedOtp);
+          }
+          setLoading(false);
+          return;
+        }
+
+        if (data.success && data.user) {
+          localStorage.setItem('pendulum_user_id', data.user.id);
+          localStorage.setItem('pendulum_user_email', data.user.email);
+          localStorage.setItem('pendulum_is_paid', data.user.isPaid ? 'true' : 'false');
+          
+          if (data.backup) {
+            addAccountBackup(data.backup);
+          }
+          
+          onSuccess(data.user.id, data.user.email, data.user.isPaid);
+          onClose();
+        }
+      } else if (mode === 'two-factor') {
+        if (!email || !resetCode) {
+          setError('Please enter the 6-digit authentication pin code.');
+          setLoading(false);
+          return;
+        }
+
+        const response = await apiFetch('/api/auth/verify-2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            code: resetCode,
+            visitorId: currentVisitorId,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Double Authentication verification failed.');
         }
 
         if (data.success && data.user) {
@@ -230,8 +276,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
             {/* Account Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               
-              {/* Email Block (shown in all modes except reset-code if prefilled) */}
-              {mode !== 'reset-code' && (
+              {/* Email Block (shown in all modes except reset-code/two-factor if prefilled) */}
+              {mode !== 'reset-code' && mode !== 'two-factor' && (
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
                     Email Address
@@ -289,6 +335,32 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Two-Factor Secure PIN Screen */}
+              {mode === 'two-factor' && (
+                <div className="space-y-4 text-left">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5">
+                      Double-Auth Verification PIN
+                    </label>
+                    <div className="relative">
+                      <Shield className="absolute left-3 top-2.5 h-4 w-4 text-indigo-400" />
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        value={resetCode}
+                        onChange={(e) => setResetCode(e.target.value)}
+                        placeholder="6-digit PIN"
+                        className="w-full rounded-xl border border-indigo-500/30 bg-[#1a1924] py-2.5 pl-10 pr-4 text-sm text-white focus:border-indigo-500 focus:outline-none transition-all font-mono text-center tracking-widest font-black text-lg"
+                      />
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-[#1d1b26] border border-indigo-500/15 p-3 text-[10px] text-zinc-400 leading-normal">
+                    🔒 <strong>Double Authorizer Active:</strong> Two-step identity confirmation matches your high-security workspace requirements. Use the generated OTP credentials to complete session sign-in.
                   </div>
                 </div>
               )}
@@ -365,6 +437,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                     <UserPlus className="w-4 h-4" />
                     <span>Initialize Profile Engine</span>
                   </>
+                ) : mode === 'two-factor' ? (
+                  <>
+                    <Shield className="w-4 h-4" />
+                    <span>Confirm 2FA PIN</span>
+                  </>
                 ) : mode === 'forgot' ? (
                   <>
                     <KeyRound className="w-4 h-4" />
@@ -413,7 +490,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
                 </>
               )}
 
-              {(mode === 'forgot' || mode === 'reset-code') && (
+              {(mode === 'forgot' || mode === 'reset-code' || mode === 'two-factor') && (
                 <button
                   type="button"
                   onClick={() => {
