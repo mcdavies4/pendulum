@@ -14,6 +14,7 @@ interface DashboardProps {
   onUpgrade: (subId: string) => void;
   onCancelPremium: () => void;
   onOpenAuth?: () => void;
+  activeTheme?: 'light' | 'dark';
 }
 
 const VERTICALS = [
@@ -23,7 +24,7 @@ const VERTICALS = [
   { id: 'event', title: 'Concert & Event Flyers', tagline: 'Register devices to view tickets & maps.', icon: Calendar, sampleName: 'Retro Fest Poster QR', sampleUrl: 'https://example.com/tickets/festival', color: 'border-purple-300 dark:border-purple-800' },
 ];
 
-export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAuth }: DashboardProps) {
+export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAuth, activeTheme = 'dark' }: DashboardProps) {
   // Application Data States
   const [qrcodes, setQrcodes] = useState<QRCodeRecord[]>([]);
   const [scans, setScans] = useState<ScanLog[]>([]);
@@ -550,21 +551,29 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       {isAdmin && (
         !hideFounderBanner ? (
           <div className="mb-8 space-y-4">
-            <div className="p-5 bg-gradient-to-r from-zinc-900 to-[#13131c] border border-zinc-800 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden backdrop-blur-md animate-fade-in">
+            <div className={`p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden backdrop-blur-md animate-fade-in border ${
+              activeTheme === 'light'
+                ? 'bg-gradient-to-r from-amber-50 via-amber-50/70 to-[#fffbeb]/50 border-amber-200 shadow-sm'
+                : 'bg-gradient-to-r from-zinc-900 to-[#13131c] border-zinc-800'
+            }`}>
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
               <div className="flex items-start gap-3.5">
                 <div className="p-3 bg-indigo-500/10 border border-indigo-400/20 text-indigo-400 rounded-xl font-bold text-lg select-none">
                   👑
                 </div>
-                <div>
+                <div className="text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-black uppercase tracking-widest text-[#facc15] font-mono">Founder Session Active</span>
-                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-black px-2 py-0.5 rounded-full uppercase tracking-tighter font-mono">
+                    <span className={`text-xs font-black uppercase tracking-widest font-mono ${activeTheme === 'light' ? 'text-amber-800' : 'text-[#facc15]'}`}>Founder Session Active</span>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter font-mono border ${
+                      activeTheme === 'light'
+                        ? 'bg-emerald-100 border-emerald-300 text-emerald-850'
+                        : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                    }`}>
                       Only visible to you
                     </span>
                   </div>
-                  <p className="text-[11px] text-zinc-300 mt-1 font-semibold max-w-lg leading-relaxed">
-                    Authorized Creator: <span className="text-white font-bold underline font-sans">support@odogwu.online / azubuikedavies@gmail.com</span> • This top bar is a developer workspace helper. Your end users will <span className="text-emerald-400 font-bold">never</span> see this banner on their accounts.
+                  <p className={`text-[11px] mt-1 font-semibold max-w-lg leading-relaxed ${activeTheme === 'light' ? 'text-amber-950/80' : 'text-zinc-300'}`}>
+                    Authorized Creator: <span className={`font-bold underline font-sans ${activeTheme === 'light' ? 'text-slate-900' : 'text-white'}`}>support@odogwu.online / azubuikedavies@gmail.com</span> • This top bar is a developer workspace helper. Your end users will <span className={`font-bold ${activeTheme === 'light' ? 'text-emerald-700' : 'text-emerald-400'}`}>never</span> see this banner on their accounts.
                   </p>
                 </div>
               </div>
@@ -574,8 +583,8 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
                   onClick={() => setShowAdminUsersList(!showAdminUsersList)}
                   className={`px-3.5 py-2 text-xs font-sans font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border flex items-center gap-1.5 ${
                     showAdminUsersList
-                      ? 'bg-indigo-505 bg-indigo-600/25 border-indigo-500/50 text-indigo-300'
-                      : 'bg-zinc-800 hover:bg-zinc-750 border-zinc-700 text-zinc-300'
+                      ? (activeTheme === 'light' ? 'bg-indigo-100 border-indigo-300 text-indigo-850' : 'bg-indigo-600/25 border-indigo-500/50 text-indigo-300')
+                      : (activeTheme === 'light' ? 'bg-amber-100 hover:bg-amber-150 border-amber-300 text-amber-900' : 'bg-zinc-800 hover:bg-zinc-750 border-zinc-700 text-zinc-300')
                   }`}
                   title="Monitor registered signups and platform conversion statistics"
                 >
@@ -593,8 +602,8 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
                   }}
                   className={`px-3.5 py-2 text-xs font-sans font-black uppercase tracking-wider rounded-xl transition-all cursor-pointer border ${
                     isPaid
-                      ? 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300'
-                      : 'bg-indigo-650 hover:bg-indigo-600 border-indigo-500/40 text-white'
+                      ? (activeTheme === 'light' ? 'bg-amber-100 hover:bg-amber-150 border-amber-300/80 text-amber-850' : 'bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30 text-amber-300')
+                      : (activeTheme === 'light' ? 'bg-indigo-600 hover:bg-indigo-700 border-indigo-550 text-white-pure' : 'bg-indigo-650 hover:bg-indigo-600 border-indigo-500/40 text-white')
                   }`}
                   title="Test how the application looks and features behave with and without active Premium status."
                 >
@@ -603,7 +612,11 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
 
                 <button
                   onClick={() => setHideFounderBanner(true)}
-                  className="px-3 py-2 text-xs font-sans font-black uppercase bg-[#1e1e2d] hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-xl border border-zinc-800 transition-all cursor-pointer"
+                  className={`px-3 py-2 text-xs font-sans font-black uppercase rounded-xl border transition-all cursor-pointer ${
+                    activeTheme === 'light'
+                      ? 'bg-white hover:bg-amber-50 text-amber-900 border-amber-300/80 hover:border-amber-400'
+                      : 'bg-[#1e1e2d] hover:bg-zinc-800 text-zinc-400 hover:text-white border-zinc-805'
+                  }`}
                   title="Hide session controls"
                 >
                   Hide Controls
@@ -751,17 +764,21 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
       )}
 
       {/* 1. Header & Active Plan Details */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-zinc-800 pb-6 mb-8 gap-4">
+      <div className={`flex flex-col md:flex-row md:items-center md:justify-between border-b pb-6 mb-8 gap-4 ${activeTheme === 'light' ? 'border-zinc-200' : 'border-zinc-800'}`}>
         <div>
           <div className="flex items-center gap-3">
-            <span className="p-2 py-1 bg-indigo-600/20 text-indigo-400 border border-indigo-500/40 font-mono text-sm font-black rounded-lg">PNDLM</span>
+            <span className={`p-2 py-1 font-mono text-sm font-black rounded-lg transition-all border ${
+              activeTheme === 'light' ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/40'
+            }`}>
+              PNDLM
+            </span>
             <h1 className="text-3xl font-black uppercase tracking-tight text-white font-sans">
               Pendulum Systems
             </h1>
-            <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-zinc-800/80 border border-zinc-700/60 ${
-              isPaid 
-                ? 'bg-indigo-650/30 border-indigo-500/50 text-indigo-300' 
-                : 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+            <span className={`text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider border transition-all ${
+              activeTheme === 'light'
+                ? (isPaid ? 'bg-indigo-100 border-indigo-300 text-indigo-800' : 'bg-amber-100 border-amber-300 text-amber-800')
+                : (isPaid ? 'bg-indigo-650/30 border-indigo-500/50 text-indigo-300' : 'bg-amber-500/15 border-amber-500/40 text-amber-400')
             }`}>
               {isPaid ? 'Pro Account' : (hasUser ? 'Free Account' : 'Guest Sandbox')}
             </span>
@@ -775,7 +792,11 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
           <button
             onClick={() => setShowBilling(!showBilling)}
             id="btn-billing-mgmt"
-            className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 hover:text-white transition-all cursor-pointer rounded-xl shadow-premium flex items-center gap-1.5"
+            className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer rounded-xl shadow-premium flex items-center gap-1.5 border ${
+              activeTheme === 'light'
+                ? 'bg-white hover:bg-zinc-50 text-slate-800 border-zinc-250 hover:border-zinc-350'
+                : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border-zinc-800 hover:text-white'
+            }`}
           >
             <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
             <span>Billing Profile</span>
@@ -784,7 +805,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
           <button
             onClick={() => { setIsCreating(true); prepopulateTemplate(); }}
             id="btn-trigger-creator"
-            className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl transition-all cursor-pointer shadow-premium flex items-center gap-1.5"
+            className="px-5 py-2.5 text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white-pure rounded-xl transition-all cursor-pointer shadow-premium flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>New Campaign</span>
@@ -794,21 +815,29 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
 
       {/* 🔮 Guest/Visitor Onboarding Signup Callout */}
       {!hasUser && onOpenAuth && (
-        <div className="mb-6 p-6 bg-gradient-to-r from-[#171520] via-[#100e17] to-[#14121d] border border-indigo-500/25 rounded-2xl relative overflow-hidden shadow-2xl animate-fade-in">
+        <div className={`mb-6 p-6 rounded-2xl relative overflow-hidden shadow-2xl animate-fade-in border ${
+          activeTheme === 'light'
+            ? 'bg-gradient-to-r from-indigo-50/70 via-indigo-50/40 to-blue-50/50 border-indigo-200'
+            : 'bg-gradient-to-r from-[#171520] via-[#100e17] to-[#14121d] border-indigo-500/25'
+        }`}>
           {/* Subtle glow circle */}
           <div className="absolute -right-16 -bottom-16 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -left-16 -top-16 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
           
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-            <div className="space-y-1.5 max-w-2xl">
-              <div className="flex items-center gap-1.5 bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full w-max">
+            <div className="space-y-1.5 max-w-2xl text-left">
+              <div className={`flex items-center gap-1.5 border font-black uppercase tracking-widest px-3 py-1 rounded-full w-max text-[10px] ${
+                activeTheme === 'light'
+                  ? 'bg-indigo-100 border-indigo-300 text-indigo-805'
+                  : 'bg-indigo-500/15 border border-indigo-500/30 text-indigo-300'
+              }`}>
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>Ready to Launch Print Campaigns?</span>
               </div>
-              <h3 className="text-lg font-black uppercase text-white tracking-wide mt-2">
+              <h3 className={`text-lg font-black uppercase tracking-wide mt-2 ${activeTheme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                 Verify Your Pendulum Profile
               </h3>
-              <p className="text-zinc-350 text-xs leading-relaxed">
+              <p className={`text-xs leading-relaxed ${activeTheme === 'light' ? 'text-slate-700' : 'text-zinc-350'}`}>
                 Guest codes are stored temporarily in your local browser sandbox. Claim your permanent verified account to 
                 <strong> synchronize tracking metrics</strong>, prevent multi-device data loss, and 
                 update redirect coordinates effortlessly on physical assets.
@@ -817,7 +846,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
             
             <button
               onClick={onOpenAuth}
-              className="px-6 py-3 shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 text-white font-bold text-xs uppercase tracking-wider transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 border-none cursor-pointer"
+              className="px-6 py-3 shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 via-blue-600 to-indigo-600 hover:from-indigo-600 hover:to-blue-700 text-white-pure font-bold text-xs uppercase tracking-wider transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 border-none cursor-pointer"
             >
               <span>Get Started & Sync Now</span>
               <ArrowRight className="w-4 h-4" />
@@ -868,23 +897,31 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
 
       {/* 🔐 Two-Factor (Double-Auth) Security Settings */}
       {hasUser && (
-        <div className="mb-8 p-5 rounded-2xl bg-gradient-to-r from-[#171520]/80 via-[#121019]/80 to-[#15131f]/80 border border-indigo-500/25 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-5 animate-fade-in text-left">
-          <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 shrink-0">
+        <div className={`mb-8 p-5 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-5 animate-fade-in text-left border ${
+          activeTheme === 'light'
+            ? 'bg-gradient-to-r from-indigo-50/70 via-indigo-50/40 to-blue-50/50 border-indigo-200 shadow-sm'
+            : 'bg-gradient-to-r from-[#171520]/80 via-[#121019]/80 to-[#15131f]/80 border-indigo-500/25 shadow-2xl'
+        }`}>
+          <div className="flex items-start gap-3.5 text-left">
+            <div className={`p-3 rounded-xl shrink-0 border ${
+              activeTheme === 'light'
+                ? 'bg-indigo-100 border-indigo-200 text-indigo-700'
+                : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
+            }`}>
               <Shield className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-sm font-black uppercase text-white tracking-wider flex flex-wrap items-center gap-2">
+              <h4 className={`text-sm font-black uppercase tracking-wider flex flex-wrap items-center gap-2 ${activeTheme === 'light' ? 'text-slate-900' : 'text-white'}`}>
                 <span>Double-Factor (MFA) Security Checklist</span>
-                <span className={`text-[9px] font-black tracking-tight px-2 py-0.5 rounded-full ${
+                <span className={`text-[9px] font-black tracking-tight px-2 py-0.5 rounded-full border ${
                   twoFactorEnabled 
-                    ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' 
-                    : 'bg-amber-500/10 border border-amber-500/20 text-amber-300'
+                    ? (activeTheme === 'light' ? 'bg-emerald-100 border-emerald-300 text-emerald-800' : 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400') 
+                    : (activeTheme === 'light' ? 'bg-amber-100 border-amber-300 text-amber-805' : 'bg-amber-500/10 border border-amber-500/20 text-amber-300')
                 }`}>
                   {twoFactorEnabled ? 'ENFORCED (2-STEP OTP)' : 'UNCONFIGURED (SINGLE AUTH)'}
                 </span>
               </h4>
-              <p className="text-zinc-400 text-xs max-w-xl">
+              <p className={`text-xs max-w-xl ${activeTheme === 'light' ? 'text-slate-700' : 'text-zinc-400'}`}>
                 Enables or disables dynamic verification codes on successive login checks. Keeps link creator and webhook access safe from brute force intrusion nodes.
               </p>
             </div>
@@ -897,8 +934,12 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
                 onChange={handleToggle2FA}
                 className="sr-only peer" 
               />
-              <div className="w-11 h-6 bg-zinc-850 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-500/40 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-350 after:border after:rounded-full after:height-5 after:width-5 after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-650 peer-checked:after:bg-indigo-300 peer-checked:after:border-indigo-400 border border-[#2c2a3d]" />
-              <span className="ml-3 text-xs font-bold uppercase tracking-wider text-zinc-300">
+              <div className={`w-11 h-6 rounded-full peer peer-focus:ring-2 peer-focus:ring-indigo-500/40 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-350 after:border after:rounded-full after:height-5 after:width-5 after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-650 peer-checked:after:bg-indigo-300 peer-checked:after:border-indigo-400 border ${
+                activeTheme === 'light'
+                  ? 'bg-zinc-200 border-zinc-300'
+                  : 'bg-zinc-850 border-[#2c2a3d]'
+              }`} />
+              <span className={`ml-3 text-xs font-bold uppercase tracking-wider ${activeTheme === 'light' ? 'text-slate-800' : 'text-zinc-300'}`}>
                 {twoFactorEnabled ? 'Enabled' : 'Disabled'}
               </span>
             </label>
@@ -1153,7 +1194,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
                   <div className="pt-2">
                     <button
                       type="submit"
-                      className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl tracking-wider shadow-premium hover:shadow-lg transition-all cursor-pointer"
+                      className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white-pure text-xs font-bold rounded-xl tracking-wider shadow-premium hover:shadow-lg transition-all cursor-pointer"
                     >
                       Deploy Campaign Route Limit
                     </button>
@@ -1439,7 +1480,7 @@ export default function Dashboard({ isPaid, onUpgrade, onCancelPremium, onOpenAu
             </p>
             <button
               onClick={() => { setIsCreating(true); prepopulateTemplate(); }}
-              className="mt-5 inline-flex items-center gap-1.5 px-5 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 text-white font-bold uppercase text-xs rounded-xl shadow-premium transition-all cursor-pointer"
+              className="mt-5 inline-flex items-center gap-1.5 px-5 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 hover:from-indigo-400 hover:to-blue-500 text-white-pure font-bold uppercase text-xs rounded-xl shadow-premium transition-all cursor-pointer"
             >
               Generate your first QR
             </button>

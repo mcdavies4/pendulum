@@ -417,6 +417,7 @@ export default function App() {
             onUpgrade={handleUpgrade}
             onCancelPremium={handleCancelPremium}
             onOpenAuth={() => setIsAuthOpen(true)}
+            activeTheme={activeTheme}
           />
         )}
       </main>
