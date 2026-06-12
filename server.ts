@@ -420,7 +420,33 @@ app.get('/r', (req: Request, res: Response) => {
     }
 
     const existingUser = db.getUserByEmail(cleanEmail);
+    const restoredHash = hashPassword('restored_on_reboot');
     if (existingUser) {
+      if (existingUser.passwordHash === restoredHash) {
+        // This was a silent server-restore placeholder. Upgrade it with their chosen password!
+        const correctHash = hashPassword(password);
+        db.updateUser(existingUser.id, { passwordHash: correctHash });
+        
+        if (visitorId && visitorId.trim()) {
+          db.migrateVisitorQRCodes(visitorId, existingUser.id);
+        }
+
+        return res.status(201).json({
+          success: true,
+          user: {
+            id: existingUser.id,
+            email: existingUser.email,
+            isPaid: existingUser.isPaid,
+          },
+          backup: {
+            id: existingUser.id,
+            email: existingUser.email,
+            passwordHash: correctHash,
+            isPaid: existingUser.isPaid,
+            createdAt: existingUser.createdAt
+          }
+        });
+      }
       return res.status(400).json({ error: 'An account with this email address already exists. Please choose another or login.' });
     }
 
@@ -469,9 +495,26 @@ app.get('/r', (req: Request, res: Response) => {
 
     const cleanEmail = email.trim().toLowerCase();
     const user = db.getUserByEmail(cleanEmail);
+    const restoredHash = hashPassword('restored_on_reboot');
 
-    if (!user || user.passwordHash !== hashPassword(password)) {
+    if (!user) {
       return res.status(401).json({ error: 'Incorrect email address or password. Please try again.' });
+    }
+
+    if (user.passwordHash === restoredHash) {
+      // The user session was created silently on reboot without their actual password context.
+      // Claim this restored shell account by recording their newly provided password hash!
+      const correctHash = hashPassword(password);
+      db.updateUser(user.id, { passwordHash: correctHash });
+      user.passwordHash = correctHash;
+    } else if (user.passwordHash !== hashPassword(password)) {
+      if (user.passwordHash === 'restored_on_reboot') {
+        const correctHash = hashPassword(password);
+        db.updateUser(user.id, { passwordHash: correctHash });
+        user.passwordHash = correctHash;
+      } else {
+        return res.status(401).json({ error: 'Incorrect email address or password. Please try again.' });
+      }
     }
 
     // Support transferring guest links to authenticated user account!
