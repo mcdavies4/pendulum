@@ -1194,16 +1194,50 @@ Return JSON only conforming to the schema of these 4 specific keys: "optimizedHe
           const url = req.originalUrl;
           const indexHtml = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf-8');
           const transformedHtml = await vite.transformIndexHtml(url, indexHtml);
-          res.status(200).set({ 'Content-Type': 'text/html' }).end(transformedHtml);
+          
+          // Dynamically replace relative URLs with absolute URLs for social media crawlers
+          const host = req.get('host') || 'localhost:3000';
+          let protocol = 'https';
+          if (host.includes('localhost') || host.includes('127.0.0.1')) {
+            protocol = 'http';
+          }
+          const absoluteBase = `${protocol}://${host}`;
+          const injectedHtml = transformedHtml
+            .replace(/\/preview\.png/g, `${absoluteBase}/preview.png`)
+            .replace(/\/favicon\.png/g, `${absoluteBase}/favicon.png`);
+
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(injectedHtml);
         } catch (e) {
           next(e);
         }
       });
     } else {
       const distPath = path.join(process.cwd(), 'dist');
-      app.use(express.static(distPath));
-      app.get('*', (req: Request, res: Response) => {
-        res.sendFile(path.join(distPath, 'index.html'));
+      // Serve static assets but do not serve index.html automatically (ensures our get("*") handler is invoked for root and other page loads)
+      app.use(express.static(distPath, { index: false }));
+      
+      app.get('*', (req: Request, res: Response, next) => {
+        // Skip API and redirect routes
+        if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/r/')) {
+          return next();
+        }
+        try {
+          const host = req.get('host') || 'localhost:3000';
+          let protocol = 'https';
+          if (host.includes('localhost') || host.includes('127.0.0.1')) {
+            protocol = 'http';
+          }
+          const absoluteBase = `${protocol}://${host}`;
+          
+          let indexHtml = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
+          const injectedHtml = indexHtml
+            .replace(/\/preview\.png/g, `${absoluteBase}/preview.png`)
+            .replace(/\/favicon\.png/g, `${absoluteBase}/favicon.png`);
+            
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(injectedHtml);
+        } catch (e) {
+          res.sendFile(path.join(distPath, 'index.html'));
+        }
       });
     }
 
