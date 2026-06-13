@@ -3,6 +3,7 @@ import Dashboard from './components/Dashboard';
 import LeadCapture from './components/LeadCapture';
 import AuthModal from './components/AuthModal';
 import LandingPage from './components/LandingPage';
+import BlogPage from './components/BlogPage';
 import { Sparkles, Compass, ShieldCheck, Mail, LogOut, User, Sun, Moon, Clock, AlertCircle } from 'lucide-react';
 import { motion } from 'motion/react';
 import { apiFetch, getAccountBackups } from './lib/api';
@@ -239,26 +240,35 @@ export default function App() {
     };
   }, []);
 
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  };
+
   // Determine route view
-  let view: 'dashboard' | 'lead' = 'dashboard';
+  let view: 'dashboard' | 'lead' | 'blog' = 'dashboard';
   let activeQrId = '';
+  let activeBlogSlug = '';
 
   if (currentPath.startsWith('/lead/')) {
     view = 'lead';
     activeQrId = currentPath.replace('/lead/', '').split('?')[0];
+  } else if (currentPath.startsWith('/blog')) {
+    view = 'blog';
+    activeBlogSlug = currentPath.replace('/blog/', '').replace('/blog', '').trim();
   }
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${activeTheme === 'light' ? 'bg-[#f7f9fc] text-slate-900' : 'bg-[#0c0a0f] text-[#f4f4f5]'} font-sans antialiased`}>
-      
-      {/* Top sticky premium glass navigation header */}
-      {view === 'dashboard' && (
+          {/* Top sticky premium glass navigation header */}
+      {(view === 'dashboard' || view === 'blog') && (
         <header className="bg-[#13131c]/80 backdrop-blur-md border-b border-[#2b2b3d] py-4.5 px-8 flex items-center justify-between sticky top-0 z-50 shadow-premium">
           <div 
             className="flex items-center gap-2.5 cursor-pointer select-none opacity-95 hover:opacity-100 transition-opacity"
             onClick={() => {
               setShowLanding(true);
               localStorage.setItem('pendulum_show_landing', 'true');
+              navigateTo('/');
             }}
           >
             <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 via-blue-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -271,24 +281,34 @@ export default function App() {
  
           <div className="hidden md:flex gap-8 text-xs font-black uppercase tracking-widest text-[#a1a1aa]">
             <span 
-              className={`cursor-pointer transition-colors ${!showLanding ? 'text-white font-black border-b-2 border-indigo-500 pb-1' : 'hover:text-white'}`}
+              className={`cursor-pointer transition-colors ${view === 'dashboard' && !showLanding ? 'text-white font-black border-b-2 border-indigo-500 pb-1' : 'hover:text-white'}`}
               onClick={() => {
                 setShowLanding(false);
                 localStorage.setItem('pendulum_show_landing', 'false');
+                navigateTo('/');
               }}
             >
               Console App
             </span>
             <span 
-              className={`cursor-pointer transition-colors ${showLanding ? 'text-white font-black border-b-2 border-indigo-500 pb-1' : 'hover:text-white'}`}
+              className={`cursor-pointer transition-colors ${view === 'dashboard' && showLanding ? 'text-white font-black border-b-2 border-indigo-500 pb-1' : 'hover:text-white'}`}
               onClick={() => {
                 setShowLanding(true);
                 localStorage.setItem('pendulum_show_landing', 'true');
+                navigateTo('/');
               }}
             >
               Product Overview
             </span>
-            {!showLanding && (
+            <span 
+              className={`cursor-pointer transition-colors ${view === 'blog' ? 'text-white font-black border-b-2 border-indigo-500 pb-1' : 'hover:text-white'}`}
+              onClick={() => {
+                navigateTo('/blog');
+              }}
+            >
+              Resources HUB
+            </span>
+            {view === 'dashboard' && !showLanding && (
               <>
                 <span className="cursor-pointer hover:text-white transition-colors" onClick={() => {
                   const el = document.getElementById('active-redirect-loops-section');
@@ -421,6 +441,13 @@ export default function App() {
       <main>
         {view === 'lead' ? (
           <LeadCapture qrId={activeQrId} />
+        ) : view === 'blog' ? (
+          <BlogPage 
+            activeSlug={activeBlogSlug}
+            onNavigate={navigateTo}
+            userEmail={userEmail}
+            activeTheme={activeTheme}
+          />
         ) : showLanding ? (
           <LandingPage 
             onEnterSandbox={handleEnterSandbox}
@@ -440,7 +467,7 @@ export default function App() {
       </main>
  
       {/* High-fidelity Elegant Footer - Clean & Professional */}
-      {view === 'dashboard' && (
+      {(view === 'dashboard' || view === 'blog') && (
         <footer className="border-t border-[#2b2b3d] py-10 bg-[#0e0c15] text-[#9393c8] text-[11px] font-bold uppercase tracking-wider mt-20 pb-14">
           <div className="max-w-7xl mx-auto px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 font-mono">

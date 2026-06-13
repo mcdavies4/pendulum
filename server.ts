@@ -1042,6 +1042,80 @@ app.get('/r', (req: Request, res: Response) => {
     res.status(200).json(leadsList);
   });
 
+  // 8.5. API - Blog posts retrieval, analytics, and publication endpoints
+  app.get('/api/blogs', (req: Request, res: Response) => {
+    try {
+      const posts = db.getAllBlogs();
+      res.status(200).json(posts);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to retrieve blog posts' });
+    }
+  });
+
+  app.get('/api/blogs/:slug', (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const post = db.getBlogBySlug(slug);
+      if (!post) {
+        return res.status(404).json({ error: 'Blog post not found' });
+      }
+      res.status(200).json(post);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to retrieve blog post' });
+    }
+  });
+
+  app.post('/api/blogs/:slug/view', (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const success = db.incrementBlogViews(slug);
+      if (!success) {
+        return res.status(404).json({ error: 'Blog post not found' });
+      }
+      res.status(200).json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to increment views' });
+    }
+  });
+
+  app.post('/api/blogs', (req: Request, res: Response) => {
+    try {
+      const { title, content, excerpt, category, author } = req.body;
+      if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
+      }
+
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+
+      // Check duplicate slug
+      const existing = db.getBlogBySlug(slug);
+      let finalSlug = slug;
+      if (existing) {
+        finalSlug = `${slug}-${Date.now().toString(36).substr(2, 4)}`;
+      }
+
+      const post = db.createBlog({
+        id: `blog_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+        slug: finalSlug,
+        title,
+        content,
+        excerpt: excerpt || content.slice(0, 150).replace(/[*#`_\-]/g, '') + '...',
+        category: category || 'General',
+        author: author || 'Team Pendulum',
+        readTime: `${Math.max(1, Math.ceil(content.split(/\s+/).length / 200))} min read`,
+        createdAt: new Date().toISOString(),
+        views: 0
+      });
+
+      res.status(201).json(post);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to create blog post' });
+    }
+  });
+
   // 9. API - Simulation Route (Creates fake scans dynamically on request to demonstrate charts in real-time!)
   app.post('/api/simulate-scan/:id', (req: Request, res: Response) => {
     const { id } = req.params;

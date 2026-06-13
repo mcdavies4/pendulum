@@ -47,6 +47,19 @@ export interface UserSession {
 
 export type VerticalType = 'restaurant' | 'real_estate' | 'retail' | 'event' | 'general';
 
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string; // Markdown string
+  category: string; // e.g. "Marketing", "Real Estate", "Restaurants", "Analytics"
+  author: string;
+  readTime: string; // e.g. "4 min read"
+  createdAt: string; // ISO Date String
+  views: number;
+}
+
 export interface VerticalConfig {
   id: VerticalType;
   title: string;

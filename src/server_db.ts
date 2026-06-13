@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { QRCodeRecord, ScanLog, LeadRecord } from './types';
+import { QRCodeRecord, ScanLog, LeadRecord, BlogPost } from './types';
 
 export interface UserRecord {
   id: string;
@@ -20,6 +20,7 @@ const QR_FILE = path.join(DATA_DIR, 'qrcodes.json');
 const SCAN_FILE = path.join(DATA_DIR, 'scans.json');
 const LEAD_FILE = path.join(DATA_DIR, 'leads.json');
 const USER_FILE = path.join(DATA_DIR, 'users.json');
+const BLOG_FILE = path.join(DATA_DIR, 'blogs.json');
 const SEEDED_FILE = path.join(DATA_DIR, 'seeded.json');
 
 // Ensure data directory exists
@@ -37,6 +38,7 @@ let scans: ScanLog[] = [];
 let leads: LeadRecord[] = [];
 let users: UserRecord[] = [];
 let seededUsers: string[] = [];
+let blogs: BlogPost[] = [];
 
 // Helper functions to read files with robust fault recovery per file
 function loadData() {
@@ -109,6 +111,20 @@ function loadData() {
     console.error('Error loading seeded registry, resetting securely:', error);
     seededUsers = [];
   }
+
+  // 6. Blog Posts
+  try {
+    if (fs.existsSync(BLOG_FILE)) {
+      const content = fs.readFileSync(BLOG_FILE, 'utf-8').trim();
+      blogs = content ? JSON.parse(content) : getSeedBlogs();
+    } else {
+      blogs = getSeedBlogs();
+      saveBlogs();
+    }
+  } catch (error) {
+    console.error('Error loading blogs.json, reverting to seeds:', error);
+    blogs = getSeedBlogs();
+  }
 }
 
 function saveUsers() {
@@ -149,6 +165,140 @@ function saveLeads() {
   } catch (err) {
     console.error('Failed to save Leads to disk', err);
   }
+}
+
+function saveBlogs() {
+  try {
+    fs.writeFileSync(BLOG_FILE, JSON.stringify(blogs, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to save Blogs to disk', err);
+  }
+}
+
+function getSeedBlogs(): BlogPost[] {
+  return [
+    {
+      id: "blog_1",
+      slug: "offline-loop-static-qr-codes-marketing",
+      title: "The Offline Loop: Why Static QR Codes Are Killing Your Marketing ROI",
+      excerpt: "Most businesses print traditional static QR codes and throw away valuable traffic. Here is how modern dynamic routing pivots campaigns instantly.",
+      category: "Marketing Strategy",
+      author: "Team Pendulum",
+      readTime: "4 min read",
+      createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+      views: 247,
+      content: `## The Hidden Trap of Standard QR Codes
+
+Every day, thousands of businesses commit a silent marketing error: they print stable, hard-coded QR codes onto banners, restaurant menus, retail packages, or signage. 
+
+When you print a **Static QR Code**, you are locking in a single, unchangeable web address. If that web address breaks, changes, or if you want to test a new offer, your printed marketing is instantly rendered **useless**. 
+
+This is the **Static QR Trap**. You spend money on print media, physical distribution, and layout configuration, only to lose command over the direction of your user's click.
+
+---
+
+### Enter Dynamic QR Routing
+
+Dynamic QR routing separates the physical print from the digital destination. Instead of embedding a direct website into the matrix, you embed a lightweight routing link (like those powered by \`Pendulum\`).
+
+Here is what dynamic routing unlocks for your offline campaigns:
+
+1. **Instant Swaps**: Pivot the destination of any printed code instantly. If your seasonal menu updates or your real estate listing sells, you can point the *existing* QR code to a clean backup page or fresh listing inside seconds.
+2. **Double-Opt-In Lead Capture**: Before sending visitors to your primary URL, optionally present an elegant, lightning-fast lead gate. Gating the sweepstakes or menu with a quick name/email capture captures highly-qualified local intent.
+3. **Physical-Digital Analytics**: Measure exactly which signs are working. Static codes provide zero details, but dynamic routing tracks exact scans, cities, mobile browser types, and real-time triggers.
+
+### The Math: Dynamic vs Static
+
+| Campaign Feature | Static QR Code | Dynamic Routing (Pendulum) |
+| :--- | :---: | :---: |
+| **Destination Editability** | ❌ Frozen Forever | ✅ Instant Hot Swaps |
+| **Real-Time Analytics** | ❌ None | ✅ Scan & Device Intelligence |
+| **Integrated Lead Gates** | ❌ No | ✅ Single-Click Double Opt-In |
+| **Marketing Customizability**| ❌ Zero | ✅ Dynamic Rich Previews |
+
+### How to Implement Offline Matrix Routing
+
+To start getting real traction, avoid linking directly to subpages. Instead:
+- Generate a dynamic routing code in your **Pendulum Console**
+- Give it a human-friendly name (e.g., "Main Food Truck Sign")
+- Designate a fallback URL, or check "Lead Capture Enabled" to harvest emails from curious customers
+- Print your high-contrast code with sufficient quiet zones (white margins) to ensure instant scanning!
+`
+    },
+    {
+      id: "blog_2",
+      slug: "real-estate-qr-lead-generation-strategies",
+      title: "Real Estate Growth Hacking: Capture 3x More Leads on Lawn Signs",
+      excerpt: "Stop forcing prospects to search addresses manually. Learn how dynamic flyers with glassmorphic contact gating transform physical drive-by traffic.",
+      category: "Real Estate",
+      author: "Marcus Cole",
+      readTime: "5 min read",
+      createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+      views: 189,
+      content: `## The Modern Homebuyer's Friction
+
+Picture this: A prospective buyer drives past a beautiful home under active listing. They see a classic "For Sale" lawn sign. If they wanted details in past years, they had to take a shaky picture of the phone number, copy down the agent's email, or manually type in the complicated real estate portal address.
+
+By the time they get home, **the impulse is gone**. You've lost a high-intent, local buyer because of friction.
+
+With dynamic QR codes prominently displayed on real estate signposts, home shoppers can scan the code directly from their car window or sidewalk. But if you simply route them to the Zillow list, you get zero details on who they are!
+
+---
+
+### Gating Offline Drive-By Traffic
+
+By positioning an interactive, modern lead capture gate before the listing brochure, agents capture high-resolution buyer details right at the physical signpost.
+
+Here is the perfect signpost setup:
+
+- **Step 1: The Clear Call-To-Action**
+  On the physical layout, don't just print a blank QR code. Always border it with clear text: *"Scan to View Interior HD Tour & Pricing"*.
+- **Step 2: The Translucent Lead Gate**
+  When scanned, the buyer sees a fast-loading page optimized for mobile safari and chrome. Before disclosing full address brochures or pricing lists, prompt them: *"Enter your email to receive immediate price alerts for this listing."*
+- **Step 3: Dynamic Redirection**
+  Upon filling the form, Pendulum instantly redirects them to the high-resolution pricing page, while alerting the listing agent in real time with the new qualified lead details.
+
+### Why Real Estate Signs Need Dynamic Redirection
+
+Houses sell, details shift, and pricing adjustments happen daily. In the dynamic world of property management, static materials are a financial liability. If you print 50 metallic lawn sign placards, you can reuse them for *every future listing* by simply logging into Pendulum and changing the target link in one click. 
+`
+    },
+    {
+      id: "blog_3",
+      slug: "physical-touchpoints-high-converting-leads",
+      title: "Bridging the Gap: The Science of High-Converting Physical Touchpoints",
+      excerpt: "How high-end restaurants, B2B agencies, and events leverage physical-digital triggers to command attention and harvest double-opt-in emails.",
+      category: "B2B & Enterprise",
+      author: "Eva Vance",
+      readTime: "6 min read",
+      createdAt: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(),
+      views: 112,
+      content: `## The Psychology of the Scan
+
+Why do people scan QR codes? It comes down to **immediate gratification** and **curiosity**. 
+
+Unlike a digital banner ad that pops up on a laptop screen while a user is working, scanning a physical QR code is an active, tactile decision. A user is looking at a menu tabletop, an event pass, or a business card, and they choose to raise their camera. Consequently, **QR scanners hold a 400% higher focus index** than typical social media scrollers.
+
+---
+
+### Designing High-Converting Physical-Digital Triggers
+
+To successfully convert physical interest into a digital double-opt-in, follow the three golden rules of offline triggers:
+
+#### 1. Establish High Contrast & Safe Scaling
+A beautiful custom QR code is useless if cameras can't read it. Make sure the foreground is sufficiently dark (deep charcoal, indigo, slate) and the background is bright white or cream. Always leave a "quiet zone" around the matrix so the scanner can lock onto the position anchors.
+
+#### 2. Promise and Deliver Immediate Value
+Generic text like *"Visit our website"* does not convert. Instead, promise direct value:
+- Restaurant: *"Scan for Today's Secret Dessert Special"*
+- Event: *"Scan to Download Tonight's Presentation Slides"*
+- Retail Package: *"Scan to Unlock 15% VIP Discount"*
+
+#### 3. Match the Visual Theme
+The lead-capturing page should feel like an extension of the physical flyer itself. Using matching colors, clean modern sans typography, and professional layouts ensures the user feels safe entering their email and completing the opt-in funnel.
+`
+    }
+  ];
 }
 
 // Seed data helpers to make the dashboard look gorgeous right off the bat!
@@ -441,5 +591,29 @@ export const db = {
       saveQRCodes();
     }
     return migratedCount;
+  },
+
+  getAllBlogs: () => {
+    return blogs;
+  },
+
+  getBlogBySlug: (slug: string) => {
+    return blogs.find(b => b.slug === slug);
+  },
+
+  createBlog: (blog: BlogPost) => {
+    blogs.unshift(blog); // add new blogs first
+    saveBlogs();
+    return blog;
+  },
+
+  incrementBlogViews: (slug: string) => {
+    const b = blogs.find(item => item.slug === slug);
+    if (b) {
+      b.views = (b.views || 0) + 1;
+      saveBlogs();
+      return true;
+    }
+    return false;
   }
 };
