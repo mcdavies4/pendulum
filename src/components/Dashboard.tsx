@@ -1,7 +1,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { QRCodeRecord, ScanLog, LeadRecord, VerticalType } from '../types';
 import QRRenderer from './QRRenderer';
-import { apiFetch } from '../lib/api';
+import { apiFetch, addAccountBackup, getAccountBackups } from '../lib/api';
 import BillingPortal from './BillingPortal';
 import { 
   Plus, Sparkles, QrCode, TrendingUp, Users, ArrowRight, Trash2, Edit2, Check, 
@@ -237,6 +237,19 @@ export default function Dashboard({
       }
       const data = await response.json();
       setTwoFactorEnabled(data.twoFactorEnabled);
+
+      // Instantly self-heal local browser account backups so state survives and synchronizes on container reboots
+      const backups = getAccountBackups();
+      const userEmail = localStorage.getItem('pendulum_user_email');
+      if (userEmail) {
+        const currentBackup = backups.find(b => b.email.toLowerCase() === userEmail.toLowerCase());
+        if (currentBackup) {
+          addAccountBackup({
+            ...currentBackup,
+            twoFactorEnabled: data.twoFactorEnabled
+          });
+        }
+      }
     } catch (e: any) {
       alert(e.message || 'Failed to update 2FA configuration in database.');
     }

@@ -491,7 +491,8 @@ app.get('/r', (req: Request, res: Response) => {
             passwordHash: correctHash,
             isPaid: existingUser.isPaid,
             subscriptionTier: tier,
-            createdAt: existingUser.createdAt
+            createdAt: existingUser.createdAt,
+            twoFactorEnabled: !!existingUser.twoFactorEnabled
           }
         });
       }
@@ -531,7 +532,8 @@ app.get('/r', (req: Request, res: Response) => {
         passwordHash: userRecord.passwordHash,
         isPaid: userRecord.isPaid,
         subscriptionTier: userRecord.subscriptionTier,
-        createdAt: userRecord.createdAt
+        createdAt: userRecord.createdAt,
+        twoFactorEnabled: false
       }
     });
   });
@@ -685,7 +687,8 @@ app.get('/r', (req: Request, res: Response) => {
         email: updatedUser.email,
         passwordHash: updatedUser.passwordHash,
         isPaid: updatedUser.isPaid,
-        createdAt: updatedUser.createdAt
+        createdAt: updatedUser.createdAt,
+        twoFactorEnabled: !!updatedUser.twoFactorEnabled
       }
     });
   });
@@ -841,6 +844,7 @@ app.get('/r', (req: Request, res: Response) => {
             email: cleanEmail,
             passwordHash: acc.passwordHash,
             isPaid: !!acc.isPaid,
+            twoFactorEnabled: !!acc.twoFactorEnabled,
             createdAt: acc.createdAt || new Date().toISOString()
           });
           restoredCount++;

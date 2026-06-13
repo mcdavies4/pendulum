@@ -16,7 +16,7 @@ export const getVisitorId = (): string => {
   return id;
 };
 
-export const addAccountBackup = (backup: { id: string; email: string; passwordHash: string; isPaid: boolean; createdAt?: string }) => {
+export const addAccountBackup = (backup: { id: string; email: string; passwordHash: string; isPaid: boolean; createdAt?: string; twoFactorEnabled?: boolean }) => {
   if (typeof window === 'undefined' || !backup || !backup.email) return;
   try {
     const raw = localStorage.getItem('pendulum_backup_accounts');
@@ -35,7 +35,7 @@ export const addAccountBackup = (backup: { id: string; email: string; passwordHa
   }
 };
 
-export const getAccountBackups = (): Array<{ id: string; email: string; passwordHash: string; isPaid: boolean; createdAt?: string }> => {
+export const getAccountBackups = (): Array<{ id: string; email: string; passwordHash: string; isPaid: boolean; createdAt?: string; twoFactorEnabled?: boolean }> => {
   if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem('pendulum_backup_accounts');
