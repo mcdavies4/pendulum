@@ -461,10 +461,14 @@ export default function Dashboard({
       }
     });
 
-    return days.map(day => ({
-      date: new Date(day).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
-      value: statsMap[day],
-    }));
+    return days.map(day => {
+      const [year, month, date] = day.split('-').map(Number);
+      const localDate = new Date(year, month - 1, date);
+      return {
+        date: localDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+        value: statsMap[day],
+      };
+    });
   };
 
   const graphData = getScansByDay();
@@ -1492,7 +1496,11 @@ export default function Dashboard({
                   <div key={idx} className="space-y-1.5">
                     <div className="flex justify-between text-xs font-semibold">
                       <span className="text-zinc-300 flex items-center gap-2">
-                        <span className="text-[14px]">{( { US: '🇺🇸', GB: '🇬🇧', DE: '🇩🇪', CA: '🇨🇦', FR: '🇫🇷', JP: '🇯🇵', AU: '🇦🇺' } as any)[item.code] || '🌐'}</span>
+                        <span className="text-[14px]">{( { 
+                          US: '🇺🇸', GB: '🇬🇧', DE: '🇩🇪', CA: '🇨🇦', FR: '🇫🇷', JP: '🇯🇵', AU: '🇦🇺',
+                          IN: '🇮🇳', BR: '🇧🇷', ZA: '🇿🇦', NG: '🇳🇬', ES: '🇪🇸', MX: '🇲🇽', IT: '🇮🇹',
+                          NL: '🇳🇱', CH: '🇨🇭', SG: '🇸🇬', IE: '🇮🇪', SE: '🇸🇪'
+                        } as any)[item.code] || '🌐'}</span>
                         <span>{item.name}</span>
                       </span>
                       <span className="font-mono text-zinc-400">{item.count} scans ({pct}%)</span>
