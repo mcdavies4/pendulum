@@ -688,6 +688,23 @@ export default function Dashboard({
                   </div>
                 </div>
 
+                {/* 💻 Technical Sandboxing & Persistence Guide */}
+                <div className="p-4 bg-indigo-505/5 border border-indigo-500/20 text-indigo-300 rounded-xl text-[11.5px] leading-relaxed font-sans space-y-2">
+                  <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[10.5px] text-zinc-200">
+                    <span className="text-xs">💡</span>
+                    <span>Administrator Knowledge Base: Data Persistence & Sandboxing</span>
+                  </div>
+                  <p className="text-zinc-400">
+                    <strong>Why are user signups sometimes lost after container restarts?</strong> The application is deployed on a <span className="text-indigo-400">server-less cloud container</span>. All local files (including <code>users.json</code> and <code>qrcodes.json</code> in the server <code>data/</code> directory) are reset to default seed configurations whenever the virtual container scales down to zero, reboots, or is rebuilt following code updates.
+                  </p>
+                  <p className="text-zinc-400">
+                    <strong>Iframe Storage Sandboxing:</strong> When testing inside the embedded Google AI Studio preview frame, Safari and Chrome strictly enforce cookies &amp; storage boundary partitioning. This resets your browser's <code>localStorage</code> dynamically upon refreshing the editor. To prevent fake signout loops during testing, click the <strong className="text-white underline">"Open in New Tab"</strong> button to run the application in its own tab! This guarantees 100% robust browser storage and self-healing backup synchronization.
+                  </p>
+                  <p className="text-zinc-300 font-medium">
+                    👉 <em>Want complete cloud persistence with absolute safety across container cold starts? Simply ask me to provision a permanent <strong>Firebase Firestore Cloud database</strong>!</em>
+                  </p>
+                </div>
+
                 {/* Active user details table */}
                 <div className="overflow-x-auto border border-[#222133]/80 rounded-xl">
                   {adminUsersLoading ? (
@@ -1778,14 +1795,15 @@ export default function Dashboard({
                               </button>
                             </div>
                           ) : (
-                            <div className="group font-mono text-[11px] truncate max-w-xs flex items-center gap-1">
-                              <span>{qr.longUrl}</span>
+                            <div className="flex items-center gap-2 font-mono text-[11px] truncate max-w-xs">
+                              <span className="truncate">{qr.longUrl}</span>
                               <button
                                 onClick={() => handleStartEdit(qr)}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white transition-opacity shrink-0 ml-1 cursor-pointer"
-                                title="Edit coordinates destination"
+                                className="p-1 text-indigo-400 hover:text-indigo-300 transition-all shrink-0 ml-1 cursor-pointer bg-zinc-900/60 rounded border border-zinc-800 flex items-center gap-1 px-1.5 py-0.5 hover:border-indigo-500/50 hover:bg-zinc-900"
+                                title="Edit destination link"
                               >
-                                <Edit2 className="w-3 h-3 text-indigo-400" />
+                                <Edit2 className="w-2.5 h-2.5 text-indigo-400" />
+                                <span className="text-[9px] font-sans font-black uppercase text-indigo-400/80 tracking-wider">Change</span>
                               </button>
                             </div>
                           )}
