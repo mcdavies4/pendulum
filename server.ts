@@ -1278,6 +1278,7 @@ Return JSON only conforming to the schema of these 4 specific keys: "optimizedHe
           const absoluteBase = `${protocol}://${host}`;
           const injectedHtml = transformedHtml
             .replace(/\/preview\.png/g, `${absoluteBase}/preview.png`)
+            .replace(/\/preview\.jpg/g, `${absoluteBase}/preview.jpg`)
             .replace(/\/favicon\.png/g, `${absoluteBase}/favicon.png`);
 
           res.status(200).set({ 'Content-Type': 'text/html' }).end(injectedHtml);
@@ -1306,6 +1307,7 @@ Return JSON only conforming to the schema of these 4 specific keys: "optimizedHe
           let indexHtml = fs.readFileSync(path.join(distPath, 'index.html'), 'utf-8');
           const injectedHtml = indexHtml
             .replace(/\/preview\.png/g, `${absoluteBase}/preview.png`)
+            .replace(/\/preview\.jpg/g, `${absoluteBase}/preview.jpg`)
             .replace(/\/favicon\.png/g, `${absoluteBase}/favicon.png`);
             
           res.status(200).set({ 'Content-Type': 'text/html' }).end(injectedHtml);
