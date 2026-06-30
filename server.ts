@@ -91,6 +91,12 @@ function getStripe(): Stripe {
 export const app = express();
 app.use(express.json());
 
+// Orynth verification route
+app.get('/ory-verify.txt', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/plain');
+  res.send('orynth-6f1d6445f2f94605984123d71d55ba98');
+});
+
 // Root redirect for naked /r paths
 app.get('/r', (req: Request, res: Response) => {
   res.redirect('/');
